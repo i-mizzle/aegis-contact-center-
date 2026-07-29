@@ -246,7 +246,71 @@ const incidentFillByType = {
 
 const SIMULATION_TICK_MS = 120
 
-const MapViewportController = ({ selectedIncident, markerRefs }) => {
+const defaultMapCenter = [9.0765, 7.4679]
+
+const mapAreaAliases = {
+  'wuse 2': [9.08457, 7.46644],
+  gwarinpa: [9.07678, 7.39897],
+  jabi: [9.07284, 7.42969],
+  'games village': [9.01941, 7.48952],
+  maitama: [9.09578, 7.50006],
+  asokoro: [9.03678, 7.54262],
+  lokogoma: [8.96248, 7.44751],
+  kubwa: [9.16628, 7.32477],
+  utako: [9.06158, 7.42541],
+  apo: [9.00431, 7.50274],
+}
+
+const parseCoordinatesQuery = (value) => {
+  const trimmed = value.trim()
+  const match = trimmed.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/)
+  if (!match) {
+    return null
+  }
+
+  const latitude = Number(match[1])
+  const longitude = Number(match[2])
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    return null
+  }
+
+  if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+    return null
+  }
+
+  return [latitude, longitude]
+}
+
+const jitterCoordinates = (center, maxOffset = 0.007) => {
+  const latOffset = (Math.random() - 0.5) * maxOffset
+  const lngOffset = (Math.random() - 0.5) * maxOffset
+  return [center[0] + latOffset, center[1] + lngOffset]
+}
+
+const buildNearbyAssets = (center) => {
+  const templates = [
+    { type: 'police unit', namePrefix: 'Police Unit', codePrefix: 'P' },
+    { type: 'ambulance unit', namePrefix: 'Ambulance', codePrefix: 'A' },
+    { type: 'fire service unit', namePrefix: 'Fire Service', codePrefix: 'F' },
+    { type: 'nema station', namePrefix: 'NEMA Station', codePrefix: 'N' },
+  ]
+
+  return templates.map((template, index) => {
+    const unitNumber = 20 + Math.floor(Math.random() * 60)
+    return {
+      id: `asset-nearby-${Date.now()}-${index}`,
+      name: `${template.namePrefix} ${template.codePrefix}-${unitNumber}`,
+      type: template.type,
+      status: 'ready to deploy',
+      coordinates: jitterCoordinates(center),
+      currentCoordinates: jitterCoordinates(center, 0.0045),
+      targetIncident: null,
+      progress: null,
+    }
+  })
+}
+
+const MapViewportController = ({ selectedIncident, markerRefs, mapSearchTarget }) => {
   const map = useMap()
 
   useEffect(() => {
@@ -260,6 +324,14 @@ const MapViewportController = ({ selectedIncident, markerRefs }) => {
       marker.openPopup()
     }
   }, [map, markerRefs, selectedIncident])
+
+  useEffect(() => {
+    if (!mapSearchTarget) {
+      return
+    }
+
+    map.flyTo(mapSearchTarget.coordinates, mapSearchTarget.zoom ?? 14, { duration: 0.7 })
+  }, [map, mapSearchTarget])
 
   return null
 }
@@ -557,6 +629,69 @@ const Incidents = () => {
   }, [selectedIncidentId])
 
   const [recordingIncident, setRecordingIncident] = useState(false)
+  const [mapSearchQuery, setMapSearchQuery] = useState('')
+  const [mapSearchFeedback, setMapSearchFeedback] = useState('Search by area name or coordinates (lat, lng) and press Enter.')
+  const [mapSearchTarget, setMapSearchTarget] = useState(null)
+  const [nearbyAssets, setNearbyAssets] = useState([])
+
+  const allMapAssets = useMemo(
+    () => [...animatedAssets, ...nearbyAssets],
+    [animatedAssets, nearbyAssets],
+  )
+
+  const handleMapSearch = (event) => {
+    event.preventDefault()
+
+    const normalizedQuery = mapSearchQuery.trim()
+    if (!normalizedQuery) {
+      setMapSearchFeedback('Enter an area name or coordinates in the format: 9.0765, 7.4679')
+      return
+    }
+
+    const searchedCoordinates = parseCoordinatesQuery(normalizedQuery)
+    if (searchedCoordinates) {
+      setMapSearchTarget({
+        coordinates: searchedCoordinates,
+        zoom: 14.2,
+        token: Date.now(),
+      })
+      setNearbyAssets(buildNearbyAssets(searchedCoordinates))
+      setMapSearchFeedback(`Moved map to ${searchedCoordinates[0].toFixed(5)}, ${searchedCoordinates[1].toFixed(5)} and dropped nearby assets.`)
+      return
+    }
+
+    const queryLower = normalizedQuery.toLowerCase()
+    const activeIncidentMatch = activeIncidents.find((incident) => (
+      incident.address.toLowerCase().includes(queryLower)
+      || incident.title.toLowerCase().includes(queryLower)
+    ))
+
+    if (activeIncidentMatch) {
+      setSelectedIncidentId(activeIncidentMatch.id)
+      setMapSearchTarget({
+        coordinates: activeIncidentMatch.coordinates,
+        zoom: 14,
+        token: Date.now(),
+      })
+      setNearbyAssets(buildNearbyAssets(activeIncidentMatch.coordinates))
+      setMapSearchFeedback(`Moved map to ${activeIncidentMatch.address} and dropped nearby assets.`)
+      return
+    }
+
+    const aliasMatchCoordinates = mapAreaAliases[queryLower]
+    if (aliasMatchCoordinates) {
+      setMapSearchTarget({
+        coordinates: aliasMatchCoordinates,
+        zoom: 13.8,
+        token: Date.now(),
+      })
+      setNearbyAssets(buildNearbyAssets(aliasMatchCoordinates))
+      setMapSearchFeedback(`Moved map to ${normalizedQuery} and dropped nearby assets.`)
+      return
+    }
+
+    setMapSearchFeedback(`No matching area found for "${normalizedQuery}". Try coordinates like 9.0765, 7.4679.`)
+  }
 
   return (
     <>
@@ -580,18 +715,31 @@ const Incidents = () => {
 
         <div className="flex w-full flex-col items-start justify-between gap-4 xl:flex-row">
           <div className="w-full rounded-lg border border-stone-200 bg-white p-2 dark:border-stone-900/50 dark:bg-stone-900/10 xl:w-2/3">
-            <div className="mb-2 flex flex-wrap items-center gap-3 px-2 py-1 text-[11px] text-stone-600 dark:text-stone-300">
-              <span className="font-semibold">Legend</span>
-              <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-red-500" />Robbery</span>
-              <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-orange-500" />Fire</span>
-              <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" />Theft</span>
-              <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-rose-500" />Domestic</span>
-              <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-sm bg-emerald" />Asset ready</span>
-              <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-sm bg-red-500" />Asset deployed</span>
+            <div className="mb-2 flex flex-col gap-2 px-2 py-1 lg:flex-row lg:items-start lg:justify-between">
+              <div className="flex flex-wrap items-center gap-3 text-[11px] text-stone-600 dark:text-stone-300">
+                <span className="font-semibold">Legend</span>
+                <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-red-500" />Robbery</span>
+                <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-orange-500" />Fire</span>
+                <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-amber-500" />Theft</span>
+                <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full bg-rose-500" />Domestic</span>
+                <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-sm bg-emerald" />Asset ready</span>
+                <span className="inline-flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-sm bg-red-500" />Asset deployed</span>
+              </div>
+
+              <form onSubmit={handleMapSearch} className="w-full max-w-sm lg:w-80">
+                <input
+                  type="text"
+                  value={mapSearchQuery}
+                  onChange={(event) => setMapSearchQuery(event.target.value)}
+                  placeholder="Search area or enter lat, lng"
+                  className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-xs text-stone-700 outline-none ring-0 transition focus:border-emerald dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:focus:border-light-green"
+                />
+                <p className="mt-1 text-[10px] text-stone-500 dark:text-stone-400">{mapSearchFeedback}</p>
+              </form>
             </div>
 
             <div className="h-155 w-full overflow-hidden rounded-xl border border-stone-200 dark:border-stone-700/60">
-              <MapContainer center={[9.0765, 7.4679]} zoom={12.7} className="h-full w-full">
+              <MapContainer center={defaultMapCenter} zoom={12.7} className="h-full w-full">
                 <TileLayer
                   attribution='&copy; OpenStreetMap contributors &copy; CARTO'
                   url={
@@ -601,7 +749,11 @@ const Incidents = () => {
                   }
                 />
 
-                <MapViewportController selectedIncident={selectedIncident} markerRefs={markerRefs} />
+                <MapViewportController
+                  selectedIncident={selectedIncident}
+                  markerRefs={markerRefs}
+                  mapSearchTarget={mapSearchTarget}
+                />
 
                 {activeIncidents.map((incident) => {
                   const selected = selectedIncidentId === incident.id
@@ -668,7 +820,7 @@ const Incidents = () => {
                   )
                 })}
 
-                {animatedAssets.map((asset) => (
+                {allMapAssets.map((asset) => (
                   <Marker key={asset.id} position={asset.currentCoordinates} icon={buildAssetIcon(asset.status)}>
                     <Popup minWidth={200}>
                       <div>
@@ -751,7 +903,7 @@ const Incidents = () => {
 
               {isAssetsPanelOpen ? (
                 <div className="mt-2 grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-                  {animatedAssets.map((asset) => (
+                  {allMapAssets.map((asset) => (
                     <div key={asset.id} className="rounded-md bg-stone-100 px-3 py-2 dark:bg-stone-800/30">
                       <p className="text-xs font-semibold text-stone-800 dark:text-stone-100">{asset.name}</p>
                       <p className="text-[11px] text-stone-500 dark:text-stone-400">{asset.type}</p>
@@ -872,7 +1024,7 @@ const Incidents = () => {
         dialogTitle={`Record a new incident`}
         maxWidthClass={`max-w-6xl`}
       >
-        <RecordNewIncident />
+        <RecordNewIncident isOpen={recordingIncident} />
       </ModalDialog>
     </>
   )

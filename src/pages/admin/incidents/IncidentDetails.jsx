@@ -21,6 +21,7 @@ import ModalDialog from '../../../components/layouts/ModalDialog';
 import DeployAsset from '../../../components/elements/workflow/incidents/DeployAsset';
 import AddIncidentNote from '../../../components/elements/workflow/incidents/AddIncidentNote';
 import ResolveIncident from '../../../components/elements/workflow/incidents/ResolveIncident';
+import ChevronIcon from '../../../components/elements/icons/ChevronIcon';
 
 const baseIncidents = [
   {
@@ -262,6 +263,104 @@ const incidentFillByType = {
 
 const SIMULATION_TICK_MS = 120
 const MAP_ZOOM = 14
+
+const bodyCamStreamVideoOptions = [
+  {
+    id: 'stream-1',
+    label: 'City street camera',
+    url: 'https://samplelib.com/lib/preview/mp4/sample-5s.mp4',
+  },
+  {
+    id: 'stream-2',
+    label: 'Responder dash camera',
+    url: 'https://samplelib.com/lib/preview/mp4/sample-10s.mp4',
+  },
+  {
+    id: 'stream-3',
+    label: 'Aerial support feed',
+    url: 'https://samplelib.com/lib/preview/mp4/sample-15s.mp4',
+  },
+]
+
+const droneStreamVideoOptions = [
+  {
+    id: 'drone-stream-1',
+    label: 'Aerial patrol footage',
+    url: 'https://video-previews.elements.envatousercontent.com/c297e742-6881-4887-8011-d1e08cfc7754/watermarked_preview/watermarked_preview.mp4',
+  },
+  {
+    id: 'drone-stream-2',
+    label: 'Aerial city flyover',
+    url: 'https://video-previews.elements.envatousercontent.com/files/e552b338-c210-4a8e-bb9b-1a929313667e/video_preview_h264.mp4',
+  },
+]
+
+const streetCamStreamVideoOptions = [
+  {
+    id: 'streetcam-stream-1',
+    label: 'Traffic corridor camera',
+    url: 'https://video-previews.elements.envatousercontent.com/files/2bd5a591-8f8a-4b2a-97e5-089536dc806d/video_preview_h264.mp4',
+  },
+]
+
+const firstNames = ['Amina', 'Kabiru', 'Tunde', 'Ifeoma', 'Binta', 'Daniel', 'Salma', 'Chinedu', 'Hauwa', 'Femi']
+const lastNames = ['Musa', 'Okoro', 'Balogun', 'Yakubu', 'Nwosu', 'Adeyemi', 'Sule', 'Garba', 'Bello', 'Obi']
+
+const hashString = (value) => value.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+
+const buildAssetPersonnel = (asset) => {
+  const assetHash = hashString(asset.id)
+  const personnelCountByType = {
+    'police unit': 2,
+    'fire service unit': 6,
+    'ambulance unit': 4,
+    'nema station': 3,
+  }
+
+  const roleByType = {
+    'police unit': ['Lead Officer', 'Support Officer'],
+    'fire service unit': ['Crew Commander', 'Pump Operator', 'Rescue Specialist', 'Firefighter', 'Safety Officer', 'Medic Support'],
+    'ambulance unit': ['Paramedic Lead', 'Paramedic', 'Emergency Technician', 'Driver'],
+    'nema station': ['Field Coordinator', 'Search Specialist', 'Operations Support'],
+  }
+
+  const personnelCount = personnelCountByType[asset.type] ?? 2
+  const roles = roleByType[asset.type] ?? ['Responder', 'Responder']
+
+  const personnel = Array.from({ length: personnelCount }).map((_, index) => {
+    const nameIndex = (assetHash + index * 3) % firstNames.length
+    const lastNameIndex = (assetHash + index * 5) % lastNames.length
+    const hasBodyCam = asset.type === 'police unit' && index % 2 === 0
+
+    return {
+      id: `${asset.id}-personnel-${index + 1}`,
+      name: `${firstNames[nameIndex]} ${lastNames[lastNameIndex]}`,
+      role: roles[index] ?? `Responder ${index + 1}`,
+      hasBodyCam,
+      deviceLabel: hasBodyCam ? 'Body Cam' : null,
+    }
+  })
+
+  let drone = null
+  if (asset.type === 'police unit' && assetHash % 2 === 0) {
+    drone = {
+      name: `SkyEye Patrol Drone ${asset.name.split(' ').pop()}`,
+      serial: `PD-${assetHash}-A`,
+    }
+  }
+
+  if (asset.type === 'fire service unit') {
+    drone = {
+      name: `FireWatch Thermal Drone ${asset.name.split(' ').pop()}`,
+      serial: `FD-${assetHash}-T`,
+    }
+  }
+
+  return {
+    personnel,
+    drone,
+  }
+}
 
 const buildIncidentIcon = (incidentType) => L.divIcon({
   className: 'incident-pin-marker',
@@ -652,6 +751,44 @@ const IncidentDetails = () => {
   }
 
   const [addingNote, setAddingNote] = useState(false)
+  const [sidebarSectionsOpen, setSidebarSectionsOpen] = useState({
+    profile: true,
+    aiAnalysis: true,
+    nearbyAssets: true,
+    streetcams: true,
+  })
+
+  const toggleSidebarSection = (sectionKey) => {
+    setSidebarSectionsOpen((current) => ({
+      ...current,
+      [sectionKey]: !current[sectionKey],
+    }))
+  }
+
+  const streetcams = useMemo(() => {
+    if (!incident) {
+      return []
+    }
+
+    return [
+      {
+        id: `${incident.id}-streetcam-1`,
+        name: 'Traffic Cam - Wuse Junction',
+        zone: 'North-East Corridor',
+      },
+      {
+        id: `${incident.id}-streetcam-2`,
+        name: 'Traffic Cam - Market Overpass',
+        zone: 'Central Axis',
+      },
+      {
+        id: `${incident.id}-streetcam-3`,
+        name: 'Traffic Cam - Ring Road Access',
+        zone: 'Southbound Entry',
+      },
+    ]
+  }, [incident])
+
   const addNote = (note) => {
     setNotes((previous) => ([
       {
@@ -666,6 +803,20 @@ const IncidentDetails = () => {
   }
 
   const [resolving, setResolving] = useState(false)
+  const [videoStream, setVideoStream] = useState({ shown: false, title: '', url: '' })
+
+  const openVideoStream = (titlePrefix, streamOptions = bodyCamStreamVideoOptions) => {
+    const selectedVideo = streamOptions[Math.floor(Math.random() * streamOptions.length)]
+    setVideoStream({
+      shown: true,
+      title: `${titlePrefix} • ${selectedVideo.label}`,
+      url: selectedVideo.url,
+    })
+  }
+
+  const closeVideoStream = () => {
+    setVideoStream({ shown: false, title: '', url: '' })
+  }
 
   const resolveIncident = () => {
     setIncidentStatus('resolved')
@@ -837,42 +988,56 @@ const IncidentDetails = () => {
             <article className="rounded-lg border border-stone-200 bg-white p-3 dark:border-stone-900/50 dark:bg-stone-900/10">
               <div className="flex items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold text-stone-800 dark:text-stone-100">Incident Profile</h2>
-                <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase ${statusTone[incidentStatus] ?? statusTone.active}`}>
-                  {incidentStatus}
-                </span>
-              </div>
-
-              <p className="mt-2 text-xs text-stone-700 dark:text-stone-200">{incident.description}</p>
-              <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${typeTone[incident.type]}`}>
-                  {incident.type}
-                </span>
-                <span className="rounded bg-stone-200 px-1.5 py-0.5 text-[10px] font-semibold text-stone-700 dark:bg-stone-700 dark:text-stone-200">
-                  {incident.callPriority}
-                </span>
-                <span className="rounded bg-stone-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-stone-700 dark:bg-stone-700 dark:text-stone-200">
-                  {incident.severity}
-                </span>
-              </div>
-
-              {deploymentMeta ? (
-                <div className="mt-3 rounded-md bg-indigo-500/10 px-2 py-2 text-[11px] text-indigo-700 dark:text-indigo-300">
-                  {deploymentMeta.allOnSite
-                    ? 'Assets On Site'
-                    : `Assets Deployed • ETA ${formatEta(deploymentMeta.soonestEtaSeconds)}`}
+                <div className="flex items-center gap-2">
+                  <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase ${statusTone[incidentStatus] ?? statusTone.active}`}>
+                    {incidentStatus}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => toggleSidebarSection('profile')}
+                    className="rounded-md border border-stone-300 p-1 text-stone-600 transition hover:bg-stone-100 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
+                    aria-label="Toggle incident profile"
+                  >
+                    <ChevronIcon className={`h-4 w-4 transition-transform ${sidebarSectionsOpen.profile ? '-rotate-90' : 'rotate-0'}`} />
+                  </button>
                 </div>
-              ) : null}
-
-              <div className="mt-3 grid gap-1 text-[11px] text-stone-600 dark:text-stone-300">
-                <p>
-                  Reported by: <span className="font-semibold text-stone-800 dark:text-stone-100">{incident.reportedBy.name}</span>
-                </p>
-                <p>Phone: {incident.reportedBy.phoneNumber}</p>
-                <p>Emergency line: {incident.emergencyContact}</p>
-                <p>
-                  Coordinates: {incident.coordinates[0].toFixed(5)}, {incident.coordinates[1].toFixed(5)}
-                </p>
               </div>
+
+              {sidebarSectionsOpen.profile ? (
+                <>
+                  <p className="mt-2 text-xs text-stone-700 dark:text-stone-200">{incident.description}</p>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${typeTone[incident.type]}`}>
+                      {incident.type}
+                    </span>
+                    <span className="rounded bg-stone-200 px-1.5 py-0.5 text-[10px] font-semibold text-stone-700 dark:bg-stone-700 dark:text-stone-200">
+                      {incident.callPriority}
+                    </span>
+                    <span className="rounded bg-stone-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-stone-700 dark:bg-stone-700 dark:text-stone-200">
+                      {incident.severity}
+                    </span>
+                  </div>
+
+                  {deploymentMeta ? (
+                    <div className="mt-3 rounded-md bg-indigo-500/10 px-2 py-2 text-[11px] text-indigo-700 dark:text-indigo-300">
+                      {deploymentMeta.allOnSite
+                        ? 'Assets On Site'
+                        : `Assets Deployed • ETA ${formatEta(deploymentMeta.soonestEtaSeconds)}`}
+                    </div>
+                  ) : null}
+
+                  <div className="mt-3 grid gap-1 text-[11px] text-stone-600 dark:text-stone-300">
+                    <p>
+                      Reported by: <span className="font-semibold text-stone-800 dark:text-stone-100">{incident.reportedBy.name}</span>
+                    </p>
+                    <p>Phone: {incident.reportedBy.phoneNumber}</p>
+                    <p>Emergency line: {incident.emergencyContact}</p>
+                    <p>
+                      Coordinates: {incident.coordinates[0].toFixed(5)}, {incident.coordinates[1].toFixed(5)}
+                    </p>
+                  </div>
+                </>
+              ) : null}
             </article>
 
 
@@ -880,12 +1045,17 @@ const IncidentDetails = () => {
             <article className="rounded-lg border border-yellow-200 bg-yellow-50 p-3 dark:border-yellow-400/10 dark:bg-yellow-900/10">
               <div className="flex items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold text-yellow-950 dark:text-yellow-100">AI Analysis</h2>
-                {/* <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase ${statusTone[incidentStatus] ?? statusTone.active}`}>
-                  {incidentStatus}
-                </span> */}
+                <button
+                  type="button"
+                  onClick={() => toggleSidebarSection('aiAnalysis')}
+                  className="rounded-md border border-yellow-300 p-1 text-yellow-700 transition hover:bg-yellow-100 dark:border-yellow-500/40 dark:text-yellow-200 dark:hover:bg-yellow-900/30"
+                  aria-label="Toggle AI analysis"
+                >
+                  <ChevronIcon className={`h-4 w-4 transition-transform ${sidebarSectionsOpen.aiAnalysis ? '-rotate-90' : 'rotate-0'}`} />
+                </button>
               </div>
 
-              {isAiAnalysisLoading ? (
+              {sidebarSectionsOpen.aiAnalysis && isAiAnalysisLoading ? (
                 <div className="mt-3 space-y-2">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-yellow-700 dark:text-yellow-300">
                     Processing incident narrative...
@@ -897,7 +1067,7 @@ const IncidentDetails = () => {
                     Reviewing caller report, threat pattern, severity level, and likely responder priorities.
                   </p>
                 </div>
-              ) : aiAnalysis ? (
+              ) : sidebarSectionsOpen.aiAnalysis && aiAnalysis ? (
                 <div className="mt-3 space-y-3">
                   <div className="rounded-md border border-yellow-300/80 bg-white/70 px-3 py-2 dark:border-yellow-200/10 dark:bg-stone-900/20">
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-yellow-800 dark:text-yellow-200">
@@ -930,39 +1100,153 @@ const IncidentDetails = () => {
             </article>
 
             <article className="rounded-lg border border-stone-200 bg-white p-3 dark:border-stone-900/50 dark:bg-stone-900/10">
-              <h2 className="text-sm font-semibold text-stone-800 dark:text-stone-100">Nearby Assets</h2>
-              <div className="mt-2 space-y-2">
-                {animatedAssets.map((asset) => {
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold text-stone-800 dark:text-stone-100">Nearby Assets</h2>
+                <button
+                  type="button"
+                  onClick={() => toggleSidebarSection('nearbyAssets')}
+                  className="rounded-md border border-stone-300 p-1 text-stone-600 transition hover:bg-stone-100 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
+                  aria-label="Toggle nearby assets"
+                >
+                  <ChevronIcon className={`h-4 w-4 transition-transform ${sidebarSectionsOpen.nearbyAssets ? '-rotate-90' : 'rotate-0'}`} />
+                </button>
+              </div>
+              {sidebarSectionsOpen.nearbyAssets ? (
+                <div className="mt-2 space-y-2">
+                  {animatedAssets.map((asset) => {
                   const isAssignedHere = asset.deployedIncidentId === incident.id
                   const canDeploy = incidentStatus === 'active' && !isAssignedHere && asset.status !== 'unavailable'
+                  const assetCrew = buildAssetPersonnel(asset)
 
                   return (
-                    <div key={asset.id} className="rounded-md bg-stone-100 px-3 py-2 dark:bg-stone-800/30">
-                      <p className="text-xs font-semibold text-stone-800 dark:text-stone-100">{asset.name}</p>
-                      <p className="text-[11px] text-stone-500 dark:text-stone-400">{asset.type}</p>
-                      <p className={`text-[11px] font-semibold ${assetStatusTone[asset.status] ?? assetStatusTone['ready to deploy']}`}>
-                        {asset.status}
-                      </p>
-                      {isAssignedHere ? (
-                        <p className="text-[11px] text-stone-600 dark:text-stone-300">
-                          {asset.etaSeconds && asset.etaSeconds > 0 ? `ETA ${formatEta(asset.etaSeconds)}` : 'On Site'}
-                        </p>
-                      ) : null}
+                    <div key={asset.id} className={`rounded-md border border-sky-200 px-3 py-2 transition-all dark:border-sky-900/50 dark:bg-stone-800/30 ${isAssignedHere ? 'bg-emerald-50/70 ring-1 ring-emerald-200 dark:ring-emerald-900/50' : 'bg-stone-100'}`}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-semibold text-stone-800 dark:text-stone-100">{asset.name}</p>
+                          <p className="text-[11px] text-stone-500 dark:text-stone-400">{asset.type}</p>
+                          <p className={`text-[11px] font-semibold ${assetStatusTone[asset.status] ?? assetStatusTone['ready to deploy']}`}>
+                            {asset.status}
+                          </p>
+                          {isAssignedHere ? (
+                            <p className="text-[11px] text-stone-600 dark:text-stone-300">
+                              {asset.etaSeconds && asset.etaSeconds > 0 ? `ETA ${formatEta(asset.etaSeconds)}` : 'On Site'}
+                            </p>
+                          ) : null}
+                        </div>
 
-                      <button
-                        type="button"
-                        disabled={!canDeploy}
-                        onClick={() => {
-                          startAssetDeployment(asset)
-                        }}
-                        className="mt-2 rounded-md bg-emerald px-3 py-1.5 text-xs font-semibold text-stone-900 transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-light-green"
-                      >
-                        {isAssignedHere ? 'Deployed' : 'Deploy Asset'}
-                      </button>
+                        <button
+                          type="button"
+                          disabled={!canDeploy}
+                          onClick={() => {
+                            startAssetDeployment(asset)
+                          }}
+                          className="rounded-md bg-emerald px-3 py-1.5 text-xs font-semibold text-stone-900 transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-light-green"
+                        >
+                          {isAssignedHere ? 'Deployed' : 'Deploy Asset'}
+                        </button>
+                      </div>
+
+                      {isAssignedHere ? (
+                        <div className="mt-2 rounded-md border border-stone-200 bg-white/80 px-2.5 py-2 dark:border-stone-700 dark:bg-stone-900/30">
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-stone-700 dark:text-stone-200">
+                            Personnel ({assetCrew.personnel.length})
+                          </p>
+                          <div className="mt-1.5 space-y-1.5">
+                            {assetCrew.personnel.map((member) => (
+                              <div key={member.id} className="flex items-center justify-between gap-2 rounded bg-stone-100 px-2 py-1 dark:bg-stone-800/40">
+                                <div>
+                                  <div className="flex flex-wrap items-center gap-1.5">
+                                    <p className="text-[11px] font-semibold text-stone-800 dark:text-stone-100">{member.name}</p>
+                                    {member.hasBodyCam ? (
+                                      <span className="inline-flex rounded-full border border-sky-300 bg-sky-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-sky-800 dark:border-sky-700 dark:bg-sky-900/20 dark:text-sky-200">
+                                        Bodycam Enabled
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                  <p className="text-[10px] text-stone-500 dark:text-stone-400">{member.role}</p>
+                                </div>
+                                {member.hasBodyCam ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => openVideoStream(`${member.name} Body Cam`, bodyCamStreamVideoOptions)}
+                                    className="rounded-md border border-sky-300 bg-sky-50 px-2 py-1 text-[10px] font-semibold text-sky-800 transition hover:bg-sky-100 dark:border-sky-700 dark:bg-sky-900/20 dark:text-sky-200"
+                                  >
+                                    Stream video
+                                  </button>
+                                ) : null}
+                              </div>
+                            ))}
+                          </div>
+
+                          {assetCrew.drone ? (
+                            <div className="mt-2 flex items-center justify-between rounded border border-indigo-200 bg-indigo-50 px-2.5 py-2 dark:border-indigo-700/50 dark:bg-indigo-900/20">
+                              <div>
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <p className="text-[11px] font-semibold text-indigo-900 dark:text-indigo-200">{assetCrew.drone.name}</p>
+                                  <span className="inline-flex rounded-full border border-indigo-300 bg-white px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-indigo-800 dark:border-indigo-500 dark:bg-indigo-900/40 dark:text-indigo-200">
+                                    Video Enabled
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-indigo-700 dark:text-indigo-300">ID: {assetCrew.drone.serial}</p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => openVideoStream(`${assetCrew.drone.name} Feed`, droneStreamVideoOptions)}
+                                className="rounded-md border border-indigo-300 bg-white px-2 py-1 text-[10px] font-semibold text-indigo-800 transition hover:bg-indigo-100 dark:border-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-200"
+                              >
+                                Stream video
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </div>
                   )
-                })}
+                  })}
+                </div>
+              ) : null}
+            </article>
+
+            <article className="rounded-lg border border-stone-200 bg-white p-3 dark:border-stone-900/50 dark:bg-stone-900/10">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold text-stone-800 dark:text-stone-100">Streetcams in the Vicinity</h2>
+                <button
+                  type="button"
+                  onClick={() => toggleSidebarSection('streetcams')}
+                  className="rounded-md border border-stone-300 p-1 text-stone-600 transition hover:bg-stone-100 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
+                  aria-label="Toggle streetcams"
+                >
+                  <ChevronIcon className={`h-4 w-4 transition-transform ${sidebarSectionsOpen.streetcams ? '-rotate-90' : 'rotate-0'}`} />
+                </button>
               </div>
+
+              {sidebarSectionsOpen.streetcams ? (
+                <div className="mt-2 space-y-2">
+                  {streetcams.map((camera) => (
+                    <div key={camera.id} className="rounded-md border border-sky-200 bg-stone-100 px-3 py-2 dark:border-sky-900/50 dark:bg-stone-800/30">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <p className="text-xs font-semibold text-stone-800 dark:text-stone-100">{camera.name}</p>
+                            <span className="inline-flex rounded-full border border-indigo-300 bg-white px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-indigo-800 dark:border-indigo-500 dark:bg-indigo-900/40 dark:text-indigo-200">
+                              Video Enabled
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-stone-500 dark:text-stone-400">{camera.zone}</p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => openVideoStream(`${camera.name} Stream`, streetCamStreamVideoOptions)}
+                          className="rounded-md border border-indigo-300 bg-white px-2 py-1 text-[10px] font-semibold text-indigo-800 transition hover:bg-indigo-100 dark:border-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-200"
+                        >
+                          Stream video
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </article>
           </div>
         </div>
@@ -1004,6 +1288,38 @@ const IncidentDetails = () => {
           doResolve={()=>{resolveIncident()}}
           close={()=>{setResolving(false)}}
         />
+      </ModalDialog>
+
+      <ModalDialog
+        shown={videoStream.shown}
+        closeFunction={closeVideoStream}
+        dialogTitle={videoStream.title || 'Live Stream'}
+        maxWidthClass={`max-w-3xl`}
+      >
+        <div className="space-y-3">
+          <p className="text-xs text-stone-600 dark:text-stone-300">
+            Simulated live stream feed from field hardware.
+          </p>
+          {videoStream.url ? (
+            <div className="overflow-hidden rounded-lg border border-stone-200 bg-black dark:border-stone-700">
+              <video
+                key={videoStream.url}
+                controls
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="h-full max-h-[60vh] w-full"
+              >
+                <source src={videoStream.url} type="video/mp4" />
+              </video>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-stone-200 bg-stone-50 px-3 py-4 text-xs text-stone-600 dark:border-stone-700 dark:bg-stone-900/30 dark:text-stone-300">
+              No video stream source available.
+            </div>
+          )}
+        </div>
       </ModalDialog>
     </>
   )

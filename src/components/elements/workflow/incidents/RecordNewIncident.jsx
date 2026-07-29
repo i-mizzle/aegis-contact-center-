@@ -87,7 +87,34 @@ const emptyCallForm = {
 
 const initialTranscriptPrompt = 'Waiting for the live transcript to begin...'
 
-const RecordNewIncident = () => {
+const nonEnglishSourceLanguages = [
+  'Hausa',
+  'Yoruba',
+  'Igbo',
+  'Fulfulde',
+  'Pidgin',
+  'Kanuri',
+]
+
+const buildTranscriptSourceNotice = () => {
+  const isRecordedInEnglish = Math.random() < 0.35
+
+  if (isRecordedInEnglish) {
+    return {
+      text: 'Call recorded in English',
+      tone: 'neutral',
+    }
+  }
+
+  const randomLanguage = nonEnglishSourceLanguages[Math.floor(Math.random() * nonEnglishSourceLanguages.length)]
+
+  return {
+    text: `Translating from ${randomLanguage}`,
+    tone: 'translation',
+  }
+}
+
+const RecordNewIncident = ({ isOpen = false }) => {
   const navigate = useNavigate()
   const timersRef = useRef([])
 
@@ -101,6 +128,7 @@ const RecordNewIncident = () => {
   const [isRecording, setIsRecording] = useState(false)
   const [transcriptLines, setTranscriptLines] = useState([])
   const [statusText, setStatusText] = useState('')
+  const [transcriptSourceNotice, setTranscriptSourceNotice] = useState(buildTranscriptSourceNotice)
 
   const selectedActiveIncidentId = activeIncidentChoices[0]
 
@@ -169,6 +197,12 @@ const RecordNewIncident = () => {
   useEffect(() => () => {
     timersRef.current.forEach((timerId) => window.clearTimeout(timerId))
   }, [])
+
+  useEffect(() => {
+    if (isOpen) {
+      setTranscriptSourceNotice(buildTranscriptSourceNotice())
+    }
+  }, [isOpen])
 
   const handleManualSubmit = () => {
     setStatusText('Incident record staged. Redirecting to the active incident details page.')
@@ -432,10 +466,16 @@ const RecordNewIncident = () => {
                     </div>
 
                     <div className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm dark:border-stone-800 dark:bg-stone-950/60">
+                      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                        <p className="font-space text-sm font-semibold text-stone-900 dark:text-stone-100">Live transcript</p>
+                        <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${transcriptSourceNotice.tone === 'translation' ? 'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/60 dark:bg-amber-500/10 dark:text-amber-300' : 'border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/60 dark:bg-emerald-500/10 dark:text-emerald-300'}`}>
+                          {transcriptSourceNotice.text}
+                        </span>
+                      </div>
                       <TextareaField
                         key={`live-transcript-${transcriptLines.length}`}
                         fieldId="live-transcript"
-                        inputLabel="Live transcript"
+                        inputLabel="Transcript stream"
                         inputPlaceholder="Transcript appears here as the call is being captured."
                         returnFieldValue={(value) => setCallForm((current) => ({ ...current, transcriptNotes: value }))}
                         preloadValue={callForm.transcriptNotes}
