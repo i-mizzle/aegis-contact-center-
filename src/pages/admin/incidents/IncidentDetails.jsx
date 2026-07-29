@@ -21,6 +21,9 @@ import ModalDialog from '../../../components/layouts/ModalDialog';
 import DeployAsset from '../../../components/elements/workflow/incidents/DeployAsset';
 import AddIncidentNote from '../../../components/elements/workflow/incidents/AddIncidentNote';
 import ResolveIncident from '../../../components/elements/workflow/incidents/ResolveIncident';
+import AutocompleteSelect from '../../../components/elements/form/AutocompleteSelect';
+import TextareaField from '../../../components/elements/form/TextareaField';
+import FormButton from '../../../components/elements/form/FormButton';
 import ChevronIcon from '../../../components/elements/icons/ChevronIcon';
 
 const baseIncidents = [
@@ -226,6 +229,22 @@ const allAssets = [
     status: 'ready to deploy',
     coordinates: [9.10822, 7.45236],
   },
+  {
+    id: 'asset-ffs-01',
+    name: 'Federal Fire Service',
+    type: 'fire service unit',
+    status: 'ready to deploy',
+    requiresApproval: true,
+    coordinates: [9.08314, 7.44938],
+  },
+  {
+    id: 'asset-dss-01',
+    name: 'DSS',
+    type: 'security unit',
+    status: 'ready to deploy',
+    requiresApproval: true,
+    coordinates: [9.06845, 7.47618],
+  },
 ]
 
 const typeTone = {
@@ -245,6 +264,7 @@ const assetStatusTone = {
   'ready to deploy': 'text-emerald-700 dark:text-light-green',
   unavailable: 'text-stone-500 dark:text-stone-400',
   'on site': 'text-sky-700 dark:text-sky-300',
+  'awaiting approval': 'text-amber-700 dark:text-amber-300',
 }
 
 const assetFill = {
@@ -252,6 +272,7 @@ const assetFill = {
   'ready to deploy': '#10b981',
   unavailable: '#78716c',
   'on site': '#0ea5e9',
+  'awaiting approval': '#f59e0b',
 }
 
 const incidentFillByType = {
@@ -303,6 +324,14 @@ const streetCamStreamVideoOptions = [
   },
 ]
 
+const escalationAuthorities = [
+  'Inspector General Command Center',
+  'Federal Fire Service HQ',
+  'DSS Regional Operations Desk',
+  'NEMA National Response Coordination',
+  'State Emergency Management Headquarters',
+]
+
 const firstNames = ['Amina', 'Kabiru', 'Tunde', 'Ifeoma', 'Binta', 'Daniel', 'Salma', 'Chinedu', 'Hauwa', 'Femi']
 const lastNames = ['Musa', 'Okoro', 'Balogun', 'Yakubu', 'Nwosu', 'Adeyemi', 'Sule', 'Garba', 'Bello', 'Obi']
 
@@ -315,6 +344,7 @@ const buildAssetPersonnel = (asset) => {
     'fire service unit': 6,
     'ambulance unit': 4,
     'nema station': 3,
+    'security unit': 4,
   }
 
   const roleByType = {
@@ -322,6 +352,7 @@ const buildAssetPersonnel = (asset) => {
     'fire service unit': ['Crew Commander', 'Pump Operator', 'Rescue Specialist', 'Firefighter', 'Safety Officer', 'Medic Support'],
     'ambulance unit': ['Paramedic Lead', 'Paramedic', 'Emergency Technician', 'Driver'],
     'nema station': ['Field Coordinator', 'Search Specialist', 'Operations Support'],
+    'security unit': ['Lead Analyst', 'Tactical Officer', 'Surveillance Specialist', 'Field Operator'],
   }
 
   const personnelCount = personnelCountByType[asset.type] ?? 2
@@ -538,7 +569,7 @@ const IncidentDetails = () => {
         }
       })
       .sort((a, b) => a.distance - b.distance)
-      .slice(0, 6)
+        .slice(0, 8)
   }, [incident])
 
   const [assetsState, setAssetsState] = useState([])
@@ -730,7 +761,11 @@ const IncidentDetails = () => {
   const deployAsset = () => {
     setAssetsState((previous) => previous.map((item) => (
       item.id === assetToDispatch.id
-        ? { ...item, status: 'deployed', deployedIncidentId: incident.id }
+        ? {
+          ...item,
+          status: item.requiresApproval ? 'awaiting approval' : 'deployed',
+          deployedIncidentId: incident.id,
+        }
         : item
     )))
     setAssetProgressById((previous) => ({ ...previous, [assetToDispatch.id]: 0 }))
@@ -803,6 +838,9 @@ const IncidentDetails = () => {
   }
 
   const [resolving, setResolving] = useState(false)
+  const [escalating, setEscalating] = useState(false)
+  const [escalationAuthority, setEscalationAuthority] = useState('')
+  const [escalationNote, setEscalationNote] = useState('')
   const [videoStream, setVideoStream] = useState({ shown: false, title: '', url: '' })
 
   const openVideoStream = (titlePrefix, streamOptions = bodyCamStreamVideoOptions) => {
@@ -824,6 +862,27 @@ const IncidentDetails = () => {
       asset.deployedIncidentId === incident.id ? { ...asset, status: 'ready to deploy', deployedIncidentId: null } : asset
     )))
     setAssetProgressById({})
+  }
+
+  const escalateIncident = () => {
+    if (!escalationAuthority) {
+      return
+    }
+
+    setNotes((previous) => ([
+      {
+        id: `${incident.id}-escalation-${Date.now()}`,
+        author: 'Escalation Desk',
+        role: 'Escalation',
+        text: `Escalated to ${escalationAuthority}.${escalationNote ? ` Note: ${escalationNote}` : ''}`,
+        time: new Date().toISOString(),
+      },
+      ...previous,
+    ]))
+
+    setEscalating(false)
+    setEscalationAuthority('')
+    setEscalationNote('')
   }
 
   if (!incident) {
@@ -858,6 +917,15 @@ const IncidentDetails = () => {
               onClick={() => setAddingNote(true)}
             >
               Add a note
+            </button>
+            <button
+              type="button"
+              className="rounded-md bg-red-600 px-3 py-2 text-xs font-semibold text-white transition hover:brightness-95"
+              onClick={() => {
+                setEscalating(true)
+              }}
+            >
+              Escalate Incident
             </button>
             <button
               type="button"
@@ -1122,7 +1190,14 @@ const IncidentDetails = () => {
                     <div key={asset.id} className={`rounded-md border border-sky-200 px-3 py-2 transition-all dark:border-sky-900/50 dark:bg-stone-800/30 ${isAssignedHere ? 'bg-emerald-50/70 ring-1 ring-emerald-200 dark:ring-emerald-900/50' : 'bg-stone-100'}`}>
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-xs font-semibold text-stone-800 dark:text-stone-100">{asset.name}</p>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <p className="text-xs font-semibold text-stone-800 dark:text-stone-100">{asset.name}</p>
+                            {asset.requiresApproval ? (
+                              <span className="inline-flex rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-800 dark:border-amber-600/70 dark:bg-amber-900/30 dark:text-amber-200">
+                                Requires Approval
+                              </span>
+                            ) : null}
+                          </div>
                           <p className="text-[11px] text-stone-500 dark:text-stone-400">{asset.type}</p>
                           <p className={`text-[11px] font-semibold ${assetStatusTone[asset.status] ?? assetStatusTone['ready to deploy']}`}>
                             {asset.status}
@@ -1140,9 +1215,9 @@ const IncidentDetails = () => {
                           onClick={() => {
                             startAssetDeployment(asset)
                           }}
-                          className="rounded-md bg-emerald px-3 py-1.5 text-xs font-semibold text-stone-900 transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-light-green"
+                          className={`rounded-md px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-90 ${asset.status === 'awaiting approval' ? 'bg-amber-200 text-amber-900 dark:bg-amber-500/30 dark:text-amber-200' : 'bg-emerald text-stone-900 hover:brightness-95 dark:bg-light-green'}`}
                         >
-                          {isAssignedHere ? 'Deployed' : 'Deploy Asset'}
+                          {asset.status === 'awaiting approval' ? 'Awaiting approval' : isAssignedHere ? 'Deployed' : 'Deploy Asset'}
                         </button>
                       </div>
 
@@ -1288,6 +1363,45 @@ const IncidentDetails = () => {
           doResolve={()=>{resolveIncident()}}
           close={()=>{setResolving(false)}}
         />
+      </ModalDialog>
+
+      <ModalDialog
+        shown={escalating}
+        closeFunction={() => {
+          setEscalating(false)
+        }}
+        dialogTitle={`Escalate incident`}
+        maxWidthClass={`max-w-lg`}
+      >
+        <div className="space-y-4">
+          <AutocompleteSelect
+            inputLabel="Escalation authority"
+            selectOptions={escalationAuthorities.map((authority) => ({ title: authority, value: authority }))}
+            titleField="title"
+            preSelected={escalationAuthority}
+            preSelectedLabel="value"
+            placeholderText="Select authority"
+            returnFieldValue={(value) => setEscalationAuthority(value.value)}
+          />
+
+          <TextareaField
+            fieldId="escalation-note"
+            inputLabel="Escalation note"
+            inputPlaceholder="Add an escalation reason or operational note"
+            preloadValue={escalationNote}
+            returnFieldValue={(value) => setEscalationNote(value)}
+          />
+
+          <div className="flex justify-end">
+            <div className="w-40">
+              <FormButton
+                buttonLabel="Escalate"
+                buttonAction={escalateIncident}
+                disabled={!escalationAuthority}
+              />
+            </div>
+          </div>
+        </div>
       </ModalDialog>
 
       <ModalDialog
