@@ -1,4 +1,7 @@
-import './App.css'
+import Recipients from './pages/admin/payments-assistance/Recipients';
+import Budgets from './pages/admin/payments-assistance/Budgets';
+import BudgetDetails from './pages/admin/payments-assistance/BudgetDetails';
+import Programmes from './pages/admin/payments-assistance/Programmes';
 import Incidents from './pages/admin/incidents/Incidents';
 import CommandDashboard from './pages/admin/dashboard/dashboards/CommandDashboard';
 import CallCenterDashboard from './pages/admin/dashboard/dashboards/CallCenterDashboard';
@@ -7,6 +10,7 @@ import AnalyticsIntelligence from './pages/admin/dashboard/dashboards/AnalyticsI
 import ResponderDashboard from './pages/admin/dashboard/dashboards/ResponderDashboard';
 import PerformanceDashboard from './pages/admin/dashboard/dashboards/PerformanceDashboard';
 import PublicWarningDashboard from './pages/admin/dashboard/dashboards/PublicWarningDashboard';
+import PaymentsAssistance from './pages/admin/dashboard/dashboards/PaymentsAssistance';
 import { Provider } from 'react-redux';
 
 import { Routes, Route, Navigate } from 'react-router-dom';
@@ -20,6 +24,8 @@ import ScrollToTop from './components/layouts/ScrollToTop';
 import store from './store/store';
 import AdminErrorPage from './pages/admin/AdminErrorPage';
 import IncidentDetails from './pages/admin/incidents/IncidentDetails';
+import PaymentsAssistancePage from './pages/admin/payments-assistance/PaymentsAssistancePage';
+import Payments from './pages/admin/payments-assistance/Payments';
 
 function App() {
 
@@ -43,10 +49,21 @@ function App() {
                 <Route path="/admin/dashboard/responder" element={<ResponderDashboard />} />
                 <Route path="/admin/dashboard/performance-reporting" element={<PerformanceDashboard />} />
                 <Route path="/admin/dashboard/public-warning-notifications" element={<PublicWarningDashboard />} />
+                <Route path="/admin/dashboard/payments-assistance" element={<PaymentsAssistance />} />
               </Route>
 
               <Route path="/admin/incidents" element={<Incidents />} />
               <Route path="/admin/incidents/:incidentId" element={<IncidentDetails />} />
+
+              <Route path="/admin/payments-assistance" element={<PaymentsAssistancePage />}>
+                <Route index element={<Navigate replace to="/admin/payments-assistance/budgets" />} />
+                <Route path="/admin/payments-assistance/budgets" element={<Budgets />} />
+                <Route path="/admin/payments-assistance/budgets/:budgetId" element={<BudgetDetails />} />
+                <Route path="/admin/payments-assistance/programmes" element={<Programmes />} />
+                <Route path="/admin/payments-assistance/recipients" element={<Recipients />} />
+                <Route path="/admin/payments-assistance/payments" element={<Payments />} />
+
+              </Route>
               
               {/* <Route path="/admin/settings" element={<Settings />}>
                 <Route index element={<Navigate replace to="/admin/settings/profile" />} />

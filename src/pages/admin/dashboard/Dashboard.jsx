@@ -33,6 +33,10 @@ const Dashboard = () => {
       label: 'Public Warning',
       path: '/admin/dashboard/public-warning-notifications',
     },
+        {
+      label: 'Payments & Assistance',
+      path: '/admin/dashboard/payments-assistance',
+    },
   ];
 
   return (

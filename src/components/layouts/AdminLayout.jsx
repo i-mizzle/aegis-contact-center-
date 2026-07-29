@@ -90,11 +90,11 @@ const AdminLayout = ({ children }) => {
       path: '/admin/incidents',
       icon: ExclamationTriangleIcon 
     },
-    // { 
-    //   label: 'Transactions', 
-    //   path: '/admin/transactions',
-    //   icon: TransactionsIcon 
-    // },
+    { 
+      label: 'Payments & Assistance', 
+      path: '/admin/payments-assistance',
+      icon: TransactionsIcon 
+    },
     // {
     //   label: 'Accounts',
     //   path: '/admin/accounts',

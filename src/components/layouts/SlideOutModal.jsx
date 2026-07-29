@@ -2,12 +2,18 @@ import React from 'react'
 import CloseIcon from '../elements/icons/CloseIcon'
 
 const SlideOutModal = ({children, isOpen, closeFunction, title, subTitle}) => {
+  if (!isOpen) {
+    return null
+  }
+
   return (
       <>
-        {isOpen && <div className={`h-screen overflow-y-scroll w-full bg-[#00000084] fixed left-0 top-0 transform transition-all duration-200 border-black`} style={{zIndex: 995}}>
-
-        </div>}
-        <div className={`h-screen overflow-y-scroll scrollbar-hidden w-full md:w-100 lg:w-125 xl:w-137.5 bg-white dark:bg-stone-950 fixed right-0 top-0 transform transition-all duration-200  border-black shadow-lg shadow-black/10 ${ isOpen ? 'transtone-x-0' : 'transtone-x-full' }`} style={{zIndex: 998}}>
+        <div
+          className="fixed left-0 top-0 h-screen w-full border-black bg-[#00000084]"
+          style={{ zIndex: 995 }}
+          onClick={closeFunction}
+        />
+        <div className="fixed right-0 top-0 h-screen w-full overflow-y-scroll scrollbar-hidden border-black bg-white shadow-lg shadow-black/10 transition-all duration-200 dark:bg-stone-950 md:w-100 lg:w-125 xl:w-137.5 translate-x-0" style={{zIndex: 998}}>
             <button className='absolute top-3 right-3 cursor-pointer text-black dark:text-white p-2 rounded hover:text-gray-600 transition duration-200 hover:bg-gray-100 dark:hover:bg-gray-900' onClick={()=>{closeFunction()}} style={{zIndex: '997'}}>
                 <CloseIcon className="w-5 h-5 text-black dark:text-gray-300" />
             </button>
