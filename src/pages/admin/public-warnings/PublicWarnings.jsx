@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useRef, useMemo, useState } from 'react'
 import ModalDialog from '../../../components/layouts/ModalDialog'
 import TextField from '../../../components/elements/form/TextField'
 import TextareaField from '../../../components/elements/form/TextareaField'
@@ -114,6 +114,9 @@ const PublicWarnings = () => {
   const [selectedChannels, setSelectedChannels] = useState([])
   const [selectedAttachment, setSelectedAttachment] = useState(null)
   const [processing, setProcessing] = useState(false)
+  const [audienceReach, setAudienceReach] = useState(0)
+  const [audienceProgress, setAudienceProgress] = useState(0)
+  const [isIdentifyingAudience, setIsIdentifyingAudience] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [typeFilter, setTypeFilter] = useState('All')
   const [channelFilter, setChannelFilter] = useState('All')
@@ -121,6 +124,9 @@ const PublicWarnings = () => {
   const [currentPage, setCurrentPage] = useState(1)
 
   const itemsPerPage = 8
+  const audienceSimulationQueueRef = useRef(0)
+  const audienceSimulationRunningRef = useRef(false)
+  const audienceSimulationTimerRef = useRef(null)
 
   const [formErrors, setFormErrors] = useState({
     title: '',
@@ -187,6 +193,52 @@ const PublicWarnings = () => {
 
   const isUploadType = selectedType?.label === 'Missing Person' || selectedType?.label === 'Crime Watch'
 
+  const runAudienceSimulation = () => {
+    if (audienceSimulationQueueRef.current <= 0) {
+      audienceSimulationRunningRef.current = false
+      setIsIdentifyingAudience(false)
+      setAudienceProgress(0)
+      return
+    }
+
+    audienceSimulationRunningRef.current = true
+    audienceSimulationQueueRef.current -= 1
+    setIsIdentifyingAudience(true)
+    setAudienceProgress(0)
+
+    const startedAt = Date.now()
+    const duration = 3000
+
+    if (audienceSimulationTimerRef.current) {
+      clearInterval(audienceSimulationTimerRef.current)
+    }
+
+    audienceSimulationTimerRef.current = setInterval(() => {
+      const elapsed = Date.now() - startedAt
+      const nextProgress = Math.min((elapsed / duration) * 100, 100)
+
+      setAudienceProgress(nextProgress)
+
+      if (nextProgress >= 100) {
+        clearInterval(audienceSimulationTimerRef.current)
+        audienceSimulationTimerRef.current = null
+
+        const simulatedAudienceGain = 1100 + Math.floor(Math.random() * 2300)
+        setAudienceReach((current) => current + simulatedAudienceGain)
+
+        runAudienceSimulation()
+      }
+    }, 100)
+  }
+
+  const queueAudienceSimulation = () => {
+    audienceSimulationQueueRef.current += 1
+
+    if (!audienceSimulationRunningRef.current) {
+      runAudienceSimulation()
+    }
+  }
+
   const toggleChannel = (channel) => {
     setSelectedChannels((current) => {
       if (current.includes(channel)) {
@@ -205,6 +257,7 @@ const PublicWarnings = () => {
 
     setSelectedRegions((current) => [...current, regionName])
     setFormErrors((current) => ({ ...current, regions: '' }))
+    queueAudienceSimulation()
   }
 
   const removeRegion = (region) => {
@@ -219,6 +272,18 @@ const PublicWarnings = () => {
     setSelectedRegions([])
     setSelectedChannels([])
     setSelectedAttachment(null)
+    setAudienceReach(0)
+    setAudienceProgress(0)
+    setIsIdentifyingAudience(false)
+
+    if (audienceSimulationTimerRef.current) {
+      clearInterval(audienceSimulationTimerRef.current)
+      audienceSimulationTimerRef.current = null
+    }
+
+    audienceSimulationQueueRef.current = 0
+    audienceSimulationRunningRef.current = false
+
     setFormErrors({
       title: '',
       type: '',
@@ -560,6 +625,25 @@ const PublicWarnings = () => {
                   ))}
                 </div>
               )}
+
+              <div className="rounded-lg border border-stone-200 bg-stone-50 p-3 dark:border-stone-800 dark:bg-stone-900/20">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-xs font-medium text-stone-600 dark:text-stone-300">Estimated audience reach</p>
+                  <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">{audienceReach.toLocaleString()}</p>
+                </div>
+
+                {isIdentifyingAudience && (
+                  <div className="mt-3 space-y-2">
+                    <p className="text-xs text-stone-500 dark:text-stone-400 pb-2">Identifying audience...</p>
+                    <div className="h-1 w-full overflow-hidden rounded-full bg-stone-200 dark:bg-stone-800">
+                      <div
+                        className="h-full rounded-full bg-emerald transition-all duration-100"
+                        style={{ width: `${audienceProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <div>
                 <p className="mb-2 text-sm text-gray-500 dark:text-gray-300">Delivery channels</p>
