@@ -92,9 +92,10 @@ const Login = () => {
         
         {/* <img src={DartLogo} alt="Dart Digital Logo" className="h-10 w-22" /> */}
 
-        {/* <h1 className="text-2xl font-semibold">Dart Digital</h1> */}
-        <div className='w-full'>
-          <h3 className="mt-6 text-lg font-medium">Welcome back!</h3>
+        <h1 className="text-2xl font-semibold">ISNAS PLUS</h1>
+        <p className="text-sm">Integrated Security and National Alert System for Nigeria and West Africa</p>
+        <div className='w-full pt-6 border-t border-stone-200 dark:border-stone-700 mt-4'>
+          <h3 className="text-md font-medium">Welcome back!</h3>
           <p className="text-sm text-stone-500 dark:text-stone-300">Please provide your registered email address and password to securely log in.</p>
         </div>
 
@@ -129,7 +130,7 @@ const Login = () => {
         </div>
 
         <div className='w-full text-center mt-4'>
-          <p className="my-3 text-sm text-opacity-70 block text-left text-gray-400">Don't have an account? Notify a Dart Digital administrators to get you started</p>
+          <p className="my-3 text-sm text-opacity-70 block text-left text-gray-400">Don't have an account? Notify an administrator to get you started</p>
         </div>
       </div>
     </div>

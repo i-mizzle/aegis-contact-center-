@@ -4,12 +4,12 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 const PaymentsAssistancePage = () => {
     const childPages = [
         {
-            label: 'Budgets',
-            path: '/admin/payments-assistance/budgets',
-        },
-        {
             label: 'Programmes',
             path: '/admin/payments-assistance/programmes',
+        },
+        {
+            label: 'Budgets',
+            path: '/admin/payments-assistance/budgets',
         },
         {
             label: 'Recipients',

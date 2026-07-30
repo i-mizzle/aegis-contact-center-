@@ -62,7 +62,7 @@ function App() {
               <Route path="/admin/public-warnings" element={<PublicWarnings />} />
 
               <Route path="/admin/payments-assistance" element={<PaymentsAssistancePage />}>
-                <Route index element={<Navigate replace to="/admin/payments-assistance/budgets" />} />
+                <Route index element={<Navigate replace to="/admin/payments-assistance/programmes" />} />
                 <Route path="/admin/payments-assistance/budgets" element={<Budgets />} />
                 <Route path="/admin/payments-assistance/budgets/:budgetId" element={<BudgetDetails />} />
                 <Route path="/admin/payments-assistance/programmes" element={<Programmes />} />
@@ -70,12 +70,14 @@ function App() {
                 <Route path="/admin/payments-assistance/payments" element={<Payments />} />
               </Route>
 
-              <Route path="/admin/resources-assets" element={<Resources />}>
+              <Route path="/admin/resources-assets">
                 <Route index element={<Navigate replace to="/admin/resources-assets/resources" />} />
-                <Route path="/admin/resources-assets/resources" element={<Resources />} />
-                <Route path="/admin/resources-assets/resources/:resourceId" element={<Resource />} />
-                <Route path="/admin/resources-assets/resources/:resourceId/personnel" element={<ResourcePersonnel />} />
-                <Route path="/admin/resources-assets/resources/:resourceId/assets" element={<ResourceAssets />} />
+                <Route path="resources" element={<Resources />} />
+                <Route path="resources/:resourceId" element={<Resource />}>
+                  <Route index element={<Navigate replace to="personnel" />} />
+                  <Route path="personnel" element={<ResourcePersonnel />} />
+                  <Route path="assets" element={<ResourceAssets />} />
+                </Route>
               </Route>
               
               {/* <Route path="/admin/settings" element={<Settings />}>

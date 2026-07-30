@@ -37,7 +37,7 @@ const AdminSidebar = ({ links, isCollapsed, mobileMenuActive, toggleMobileMenu }
             )}
             {/* <div className={isExpanded ? '' : 'w-full flex justify-center'}> */}
             
-              {isExpanded && <h1 className='text-lg font-bold mb-0'>Contact Centre</h1>}
+              {isExpanded && <h1 className='text-lg font-bold mb-0'>ISNAS Plus</h1>}
               {isExpanded && <p className='text-sm text-stone-600 dark:text-stone-300 font-space'>Administration</p>}
             {/* </div> */}
         </div>

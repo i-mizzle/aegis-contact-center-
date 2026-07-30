@@ -53,10 +53,39 @@ const formatDateTime = (value) => {
   }).format(value)
 }
 
+const wantedPersonAvatar = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTVufv-lHG6ZZD14ASnJRnGLT4tx_EC9FNPxRIIc5qh1Q&s=10'
+
 const buildSeedWarnings = () => {
   return [
     {
       id: 'WARN-0001',
+      type: 'Crime Watch',
+      title: 'Wanted Person Alert',
+      body: 'Public assistance needed. Last seen near the central market area. Do not approach and report any sightings immediately.',
+      deliveredTo: 15820,
+      regions: ['Lagos Mainland', 'Lagos Island', 'Ikeja'],
+      channels: ['App push', 'Social media', 'Email'],
+      sentAt: new Date('2026-07-30T08:15:00'),
+      resendCount: 0,
+      avatar: wantedPersonAvatar,
+      avatarAlt: 'Wanted person notice',
+      isWantedPerson: true,
+      personName: 'Unknown Suspect',
+      lastSeen: 'Central Market, Lagos',
+    },
+    {
+      id: 'WARN-0002',
+      type: 'Crime Watch',
+      title: 'Armed Robbery Advisory',
+      body: 'Security teams are monitoring reported robbery activity. Avoid isolated streets after dark and stay in groups.',
+      deliveredTo: 9360,
+      regions: ['Abuja Municipal', 'Wuse', 'Kubwa'],
+      channels: ['SMS', 'App push'],
+      sentAt: new Date('2026-07-29T21:30:00'),
+      resendCount: 1,
+    },
+    {
+      id: 'WARN-0003',
       type: 'Disaster Alert',
       title: 'Flood Watch Update',
       body: 'Heavy rainfall expected from 6PM. Move valuables to higher ground and avoid river channels.',
@@ -67,7 +96,7 @@ const buildSeedWarnings = () => {
       resendCount: 0,
     },
     {
-      id: 'WARN-0002',
+      id: 'WARN-0004',
       type: 'Environmental Advisory',
       title: 'Heat Advisory',
       body: 'Daytime temperatures are high. Stay hydrated, reduce outdoor activity between 12PM and 3PM.',
@@ -78,7 +107,7 @@ const buildSeedWarnings = () => {
       resendCount: 1,
     },
     {
-      id: 'WARN-0003',
+      id: 'WARN-0005',
       type: 'Traffic and Transport',
       title: 'Road Closure Notice',
       body: 'Emergency repairs are ongoing on Ring Road. Use approved diversions until 8PM today.',
@@ -89,7 +118,7 @@ const buildSeedWarnings = () => {
       resendCount: 2,
     },
     {
-      id: 'WARN-0004',
+      id: 'WARN-0006',
       type: 'Public Health Notice',
       title: 'Power Surge Alert',
       body: 'Temporary voltage fluctuation reported. Unplug sensitive devices until official all-clear notice.',
@@ -371,6 +400,13 @@ const PublicWarnings = () => {
 
   return (
     <section className="space-y-5">
+    <div className="">
+        <p className="text-xs font-semibold tracking-wide text-emerald dark:text-light-green">Public Warnings</p>
+        <h1 className="mt-2 text-2xl font-semibold text-stone-900 dark:text-stone-100">Public Warnings Suite</h1>
+        <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
+            Centralized platform for managing public warnings, including message broadcasting, audience targeting, and regional coverage.
+        </p>
+    </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <article className="rounded-lg border border-stone-200 bg-white p-4 dark:border-stone-900/50 dark:bg-stone-900/10">
           <p className="text-xs text-stone-500 dark:text-stone-400">Total warnings sent</p>
@@ -493,8 +529,25 @@ const PublicWarnings = () => {
               {paginatedWarnings.map((warning) => (
                 <tr key={warning.id} className="border-b border-stone-100 transition hover:bg-stone-50 dark:border-stone-800 dark:hover:bg-stone-900/20">
                   <td className="px-2 py-3 align-top">
-                    <p className="font-semibold text-stone-900 dark:text-stone-100">{warning.title}</p>
-                    <p className="mt-1 max-w-md text-xs leading-5 text-stone-500 dark:text-stone-400">{warning.body}</p>
+                    <div className="flex items-start gap-3">
+                      {warning.avatar && (
+                        <img
+                          src={warning.avatar}
+                          alt={warning.avatarAlt || warning.title}
+                          className="h-auto w-14 shrink-0 rounded-lg border border-stone-200 object-cover dark:border-stone-800"
+                        />
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-semibold text-stone-900 dark:text-stone-100">{warning.title}</p>
+                        {warning.isWantedPerson && warning.personName && (
+                          <p className="mt-1 text-xs font-medium text-stone-600 dark:text-stone-300">Wanted person: {warning.personName}</p>
+                        )}
+                        {warning.isWantedPerson && warning.lastSeen && (
+                          <p className="text-xs text-stone-500 dark:text-stone-400">Last seen: {warning.lastSeen}</p>
+                        )}
+                        <p className="mt-1 max-w-md text-xs leading-5 text-stone-500 dark:text-stone-400">{warning.body}</p>
+                      </div>
+                    </div>
                   </td>
                   <td className="px-2 py-3 align-top">
                     <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${WARNING_TYPE_TONE[warning.type] || 'bg-stone-100 text-stone-700 dark:bg-stone-900/30 dark:text-stone-300'}`}>
