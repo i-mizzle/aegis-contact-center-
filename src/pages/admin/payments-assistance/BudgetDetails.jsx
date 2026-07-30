@@ -79,6 +79,16 @@ const BudgetDetails = () => {
 
   const channels = ['Bank Transfer', 'NQR', 'Voucher', 'USSD', 'Wallet']
   const recipientStatuses = ['Pending', 'Approved', 'Disbursed', 'Failed', 'Flagged']
+  const recipientFirstNames = [
+    'Adebayo', 'Chiamaka', 'Emeka', 'Funmilayo', 'Ifeoluwa', 'Kehinde', 'Musa', 'Ngozi', 'Oluwatobi',
+    'Sadiq', 'Tolu', 'Zainab', 'Bolanle', 'Dayo', 'Femi', 'Grace', 'Hassan', 'Kelechi', 'Nneka', 'Segun',
+    'Yemi', 'Amina', 'Babatunde', 'Jummai', 'Rasheed', 'Uche', 'Wasiu', 'Adaobi', 'Mariam'
+  ]
+  const recipientLastNames = [
+    'Adewale', 'Okafor', 'Balogun', 'Ibrahim', 'Akinyemi', 'Bello', 'Adamu', 'Eze', 'Lawal', 'Ogunleye',
+    'Nwosu', 'Adebisi', 'Usman', 'Obi', 'Umar', 'Chukwu', 'Suleiman', 'Oladipo', 'Afolabi', 'Musa',
+    'Okafor', 'Raji', 'Danjuma', 'Ogundipe'
+  ]
 
   const recipients = useMemo(() => {
     return Array.from({ length: 48 }, (_, index) => {
@@ -89,9 +99,12 @@ const BudgetDetails = () => {
       const disbursementDate = new Date(resolveBudget.createdAt)
       disbursementDate.setDate(disbursementDate.getDate() + 3 + (index % 18))
 
+      const firstName = recipientFirstNames[index % recipientFirstNames.length]
+      const lastName = recipientLastNames[(index + Math.floor(index / recipientFirstNames.length)) % recipientLastNames.length]
+
       return {
         id: `REC-${resolveBudget.id}-${(index + 1).toString().padStart(3, '0')}`,
-        name: `Recipient ${index + 1}`,
+        name: `${firstName} ${lastName}`,
         state,
         lga: `${state} LGA ${((index % 5) + 1)}`,
         amount,

@@ -1,7 +1,12 @@
 import Recipients from './pages/admin/payments-assistance/Recipients';
+import PublicWarnings from './pages/admin/public-warnings/PublicWarnings';
 import Budgets from './pages/admin/payments-assistance/Budgets';
 import BudgetDetails from './pages/admin/payments-assistance/BudgetDetails';
 import Programmes from './pages/admin/payments-assistance/Programmes';
+import Resources from './pages/admin/resources/Resources';
+import Resource from './pages/admin/resources/resource/Resource';
+import ResourcePersonnel from './pages/admin/resources/resource/ResourcePersonnel';
+import ResourceAssets from './pages/admin/resources/resource/ResourceAssets';
 import Incidents from './pages/admin/incidents/Incidents';
 import CommandDashboard from './pages/admin/dashboard/dashboards/CommandDashboard';
 import CallCenterDashboard from './pages/admin/dashboard/dashboards/CallCenterDashboard';
@@ -54,6 +59,7 @@ function App() {
 
               <Route path="/admin/incidents" element={<Incidents />} />
               <Route path="/admin/incidents/:incidentId" element={<IncidentDetails />} />
+              <Route path="/admin/public-warnings" element={<PublicWarnings />} />
 
               <Route path="/admin/payments-assistance" element={<PaymentsAssistancePage />}>
                 <Route index element={<Navigate replace to="/admin/payments-assistance/budgets" />} />
@@ -62,7 +68,14 @@ function App() {
                 <Route path="/admin/payments-assistance/programmes" element={<Programmes />} />
                 <Route path="/admin/payments-assistance/recipients" element={<Recipients />} />
                 <Route path="/admin/payments-assistance/payments" element={<Payments />} />
+              </Route>
 
+              <Route path="/admin/resources-assets" element={<Resources />}>
+                <Route index element={<Navigate replace to="/admin/resources-assets/resources" />} />
+                <Route path="/admin/resources-assets/resources" element={<Resources />} />
+                <Route path="/admin/resources-assets/resources/:resourceId" element={<Resource />} />
+                <Route path="/admin/resources-assets/resources/:resourceId/personnel" element={<ResourcePersonnel />} />
+                <Route path="/admin/resources-assets/resources/:resourceId/assets" element={<ResourceAssets />} />
               </Route>
               
               {/* <Route path="/admin/settings" element={<Settings />}>

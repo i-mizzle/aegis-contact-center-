@@ -95,16 +95,16 @@ const AdminLayout = ({ children }) => {
       path: '/admin/payments-assistance',
       icon: TransactionsIcon 
     },
-    // {
-    //   label: 'Accounts',
-    //   path: '/admin/accounts',
-    //   icon: SquaresIcon
-    // },
-    // {
-    //   label: 'Payouts',
-    //   path: '/admin/payouts',
-    //   icon: ArrowTopRightOnSquareIcon
-    // },
+    {
+      label: 'Resources & Assets',
+      path: '/admin/resources-assets',
+      icon: SquaresIcon
+    },
+    {
+      label: 'Public Warnings',
+      path: '/admin/public-warnings',
+      icon: ExclamationTriangleIcon
+    },
     // {
     //   label: 'Users',
     //   path: '/admin/users',
