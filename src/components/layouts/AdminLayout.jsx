@@ -85,25 +85,25 @@ const AdminLayout = ({ children }) => {
         }
       ] 
     },
-    { 
-      label: 'Incidents', 
-      path: '/admin/incidents',
-      icon: ExclamationTriangleIcon 
-    },
-    { 
-      label: 'Payments & Assistance', 
-      path: '/admin/payments-assistance',
-      icon: TransactionsIcon 
-    },
     {
       label: 'Resources & Assets',
       path: '/admin/resources-assets',
       icon: SquaresIcon
     },
+    { 
+      label: 'Incidents', 
+      path: '/admin/incidents',
+      icon: ExclamationTriangleIcon 
+    },
     {
       label: 'Public Warnings',
       path: '/admin/public-warnings',
       icon: ExclamationTriangleIcon
+    },
+    { 
+      label: 'Payments & Assistance', 
+      path: '/admin/payments-assistance',
+      icon: TransactionsIcon 
     },
     // {
     //   label: 'Users',

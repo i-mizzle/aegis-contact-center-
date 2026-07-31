@@ -1,5 +1,22 @@
 import React, { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import ModalDialog from '../../../../components/layouts/ModalDialog'
+import OnboardAsset from '../../../../components/elements/workflow/resources/OnboardAsset'
+import AudioIcon from '../../../../components/elements/icons/AudioIcon'
+import CameraIcon from '../../../../components/elements/icons/CameraIcon'
+import PhotoIcon from '../../../../components/elements/icons/PhotoIcon'
+
+const createInitialAssetForm = () => ({
+  name: '',
+  serialNumber: '',
+  assetType: '',
+  assignedUnit: '',
+  commissionedDate: '',
+  status: 'Active',
+  cameraEnabled: false,
+  audioEnabled: false,
+  stillPhotosEnabled: false,
+})
 
 const ResourceAssets = () => {
   const { resourceId } = useParams()
@@ -7,6 +24,11 @@ const ResourceAssets = () => {
   const [statusFilter, setStatusFilter] = useState('All statuses')
   const [typeFilter, setTypeFilter] = useState('All asset types')
   const [currentPage, setCurrentPage] = useState(1)
+  const [asset, setAsset] = useState(() => createInitialAssetForm())
+  const [onboardedAssets, setOnboardedAssets] = useState([])
+  const [showOnboardModal, setShowOnboardModal] = useState(false)
+  const [createError, setCreateError] = useState('')
+  const [formRenderKey, setFormRenderKey] = useState(0)
   const pageSize = 10
 
   const assetRecords = useMemo(() => {
@@ -40,17 +62,21 @@ const ResourceAssets = () => {
         assignedUnit: `Unit ${((index % 9) + 1).toString().padStart(2, '0')}`,
         serialNumber: `SN-${resourceNumber}-${(16000 + index * 29)}`,
         commissionedDate,
+        audioEnabled: index % 3 !== 0,
+        videoEnabled: assetType === 'Drone' || index % 4 === 0,
+        stillPhotosEnabled: assetType === 'Drone' || index % 5 < 2,
       }
     })
   }, [resourceId])
 
-  const typeOptions = useMemo(() => ['All asset types', ...new Set(assetRecords.map((item) => item.assetType))], [assetRecords])
+  const allAssetRecords = useMemo(() => [...onboardedAssets, ...assetRecords], [assetRecords, onboardedAssets])
+  const typeOptions = useMemo(() => ['All asset types', ...new Set(allAssetRecords.map((item) => item.assetType))], [allAssetRecords])
   const statusOptions = ['All statuses', 'Active', 'Decommissioned', 'Under Maintenance']
 
   const filteredAssets = useMemo(() => {
     const query = searchTerm.trim().toLowerCase()
 
-    return assetRecords.filter((asset) => {
+    return allAssetRecords.filter((asset) => {
       const matchesQuery =
         query.length === 0 ||
         [asset.id, asset.name, asset.assetType, asset.status, asset.serialNumber, asset.assignedUnit]
@@ -61,7 +87,7 @@ const ResourceAssets = () => {
 
       return matchesQuery && matchesStatus && matchesType
     })
-  }, [assetRecords, searchTerm, statusFilter, typeFilter])
+  }, [allAssetRecords, searchTerm, statusFilter, typeFilter])
 
   const totalPages = Math.max(1, Math.ceil(filteredAssets.length / pageSize))
   const page = Math.min(currentPage, totalPages)
@@ -89,6 +115,42 @@ const ResourceAssets = () => {
     setCurrentPage(1)
   }
 
+  const closeOnboardModal = () => {
+    setShowOnboardModal(false)
+    setCreateError('')
+    setAsset(createInitialAssetForm())
+    setFormRenderKey((key) => key + 1)
+  }
+
+  const updateAssetField = (field, value) => {
+    setAsset((current) => ({ ...current, [field]: value }))
+    if (createError) {
+      setCreateError('')
+    }
+  }
+
+  const onboardAsset = () => {
+    const requiredFields = ['name', 'serialNumber', 'assetType', 'assignedUnit', 'commissionedDate', 'status']
+    const hasMissingField = requiredFields.some((field) => !`${asset[field] || ''}`.trim())
+
+    if (hasMissingField) {
+      setCreateError('Complete all required asset details before onboarding.')
+      return
+    }
+
+    const resourceNumber = Number(`${resourceId || ''}`.replace(/\D/g, '')) || 1
+    setOnboardedAssets((current) => [
+      {
+        ...asset,
+        id: `AST-${resourceNumber.toString().padStart(3, '0')}-${(assetRecords.length + current.length + 1).toString().padStart(3, '0')}`,
+        commissionedDate: new Date(`${asset.commissionedDate}T00:00:00`),
+      },
+      ...current,
+    ])
+    setCurrentPage(1)
+    closeOnboardModal()
+  }
+
   const formatDate = (value) => new Intl.DateTimeFormat('en-NG', {
     day: '2-digit',
     month: 'short',
@@ -102,6 +164,13 @@ const ResourceAssets = () => {
           <h3 className="text-sm font-semibold text-stone-800 dark:text-stone-100">Resource Assets</h3>
           <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">Asset registry including vehicles, equipment, drones, and support systems tied to this resource location.</p>
         </div>
+        <button
+          type="button"
+          onClick={() => setShowOnboardModal(true)}
+          className="rounded-lg bg-emerald px-4 py-2 text-sm font-semibold text-stone-900 transition hover:bg-emerald/80 dark:bg-light-green dark:hover:bg-light-green/80"
+        >
+          Onboard asset
+        </button>
       </div>
 
       <div className="mb-6 grid gap-3 md:grid-cols-[1.4fr_1fr_1fr_auto]">
@@ -182,7 +251,27 @@ const ResourceAssets = () => {
             {paginatedAssets.map((asset) => (
               <tr key={asset.id} className="border-b border-stone-100 transition hover:bg-stone-50 dark:border-stone-800 dark:hover:bg-stone-800/20">
                 <td className="px-2 py-3">
-                  <p className="font-medium text-stone-900 dark:text-stone-100">{asset.name}</p>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <p className="font-medium text-stone-900 dark:text-stone-100">{asset.name}</p>
+                    {asset.audioEnabled && (
+                      <span title="Audio enabled" className="inline-flex rounded-full bg-sky-500/15 p-1 text-sky-700 dark:text-sky-300">
+                        <AudioIcon className="h-3.5 w-3.5" />
+                        <span className="sr-only">Audio enabled</span>
+                      </span>
+                    )}
+                    {(asset.videoEnabled || asset.cameraEnabled) && (
+                      <span title="Video enabled" className="inline-flex rounded-full bg-violet-500/15 p-1 text-violet-700 dark:text-violet-300">
+                        <CameraIcon className="h-3.5 w-3.5" />
+                        <span className="sr-only">Video enabled</span>
+                      </span>
+                    )}
+                    {asset.stillPhotosEnabled && (
+                      <span title="Still photos enabled" className="inline-flex rounded-full bg-emerald/15 p-1 text-emerald dark:text-light-green">
+                        <PhotoIcon className="h-3.5 w-3.5" />
+                        <span className="sr-only">Still photos enabled</span>
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-stone-500 dark:text-stone-400">{asset.id} • {asset.serialNumber}</p>
                 </td>
                 <td className="px-2 py-3 text-stone-700 dark:text-stone-200">{asset.assetType}</td>
@@ -225,6 +314,24 @@ const ResourceAssets = () => {
           </button>
         </div>
       </div>
+
+      <ModalDialog
+        shown={showOnboardModal}
+        closeFunction={closeOnboardModal}
+        dialogTitle="Onboard asset"
+        maxWidthClass="max-w-3xl"
+      >
+        <OnboardAsset
+          key={formRenderKey}
+          closeFunction={closeOnboardModal}
+          createError={createError}
+          onboardAsset={onboardAsset}
+          asset={asset}
+          updateAssetField={updateAssetField}
+          assetTypeSelectOptions={typeOptions.filter((type) => type !== 'All asset types').map((name) => ({ name }))}
+          statusSelectOptions={statusOptions.filter((status) => status !== 'All statuses').map((name) => ({ name }))}
+        />
+      </ModalDialog>
     </article>
   )
 }

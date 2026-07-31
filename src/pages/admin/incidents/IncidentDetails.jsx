@@ -1411,8 +1411,8 @@ const IncidentDetails = () => {
         maxWidthClass={`max-w-3xl`}
       >
         <div className="space-y-3">
-          <p className="text-xs text-stone-600 dark:text-stone-300">
-            Simulated live stream feed from field hardware.
+          <p className="text-xs text-stone-600 dark:text-stone-300 pb-4">
+            Live stream feed from field hardware.
           </p>
           {videoStream.url ? (
             <div className="overflow-hidden rounded-lg border border-stone-200 bg-black dark:border-stone-700">

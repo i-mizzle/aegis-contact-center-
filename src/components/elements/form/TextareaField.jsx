@@ -20,7 +20,7 @@ const TextareaField = ({inputLabel, fieldId, maxLength, requiredField, hasError,
             </label>
             <textarea 
                 id={fieldId} 
-                 className={`rounded py-4 px-4 text-sm block w-full focus:border-stone-800 focus:outline-none hover:border-gray-200 dark:hover:border-stone-900 border bg-at-black/5 dark:bg-at-dark-gray/5 transition duration-200 focus:bg-white dark:focus:bg-stone-950/60 font-outfit placeholder:font-outfit  ${hasError ? 'border-red-400' : 'border-transparent'} min-h-30`}
+                 className={`rounded py-3 px-4 text-sm block w-full focus:border-gray-800 focus:outline-none hover:border-gray-200 dark:hover:border-stone-900 border bg-black/10 dark:bg-black/20 transition duration-200 focus:bg-white dark:focus:bg-stone-950 dark:focus:border-stone-700 font-outfit placeholder:font-outfit  ${hasError ? 'border-red-400' : 'border-transparent'} min-h-30`}
                 onChange={(e)=>{setValue(e.target.value)}}
                 value={fieldValue}
                 disabled={disabled}

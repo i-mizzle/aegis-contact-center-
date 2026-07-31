@@ -1,5 +1,19 @@
 import React, { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
+import ModalDialog from '../../../../components/layouts/ModalDialog'
+import OnboardPersonnel from '../../../../components/elements/workflow/resources/OnboardPersonnel'
+
+const createInitialPersonnelForm = () => ({
+  name: '',
+  serviceNumber: '',
+  email: '',
+  phone: '',
+  rank: '',
+  position: '',
+  shift: '',
+  status: 'Active',
+  yearsInService: '',
+})
 
 const ResourcePersonnel = () => {
   const { resourceId } = useParams()
@@ -7,6 +21,11 @@ const ResourcePersonnel = () => {
   const [statusFilter, setStatusFilter] = useState('All statuses')
   const [rankFilter, setRankFilter] = useState('All ranks')
   const [currentPage, setCurrentPage] = useState(1)
+  const [personnel, setPersonnel] = useState(() => createInitialPersonnelForm())
+  const [onboardedPersonnel, setOnboardedPersonnel] = useState([])
+  const [showOnboardModal, setShowOnboardModal] = useState(false)
+  const [createError, setCreateError] = useState('')
+  const [formRenderKey, setFormRenderKey] = useState(0)
   const pageSize = 10
 
   const personnelRecords = useMemo(() => {
@@ -35,13 +54,14 @@ const ResourcePersonnel = () => {
     })
   }, [resourceId])
 
-  const rankOptions = useMemo(() => ['All ranks', ...new Set(personnelRecords.map((item) => item.rank))], [personnelRecords])
+  const allPersonnelRecords = useMemo(() => [...onboardedPersonnel, ...personnelRecords], [onboardedPersonnel, personnelRecords])
+  const rankOptions = useMemo(() => ['All ranks', ...new Set(allPersonnelRecords.map((item) => item.rank))], [allPersonnelRecords])
   const statusOptions = ['All statuses', 'Active', 'Suspended', 'Off-duty']
 
   const filteredPersonnel = useMemo(() => {
     const query = searchTerm.trim().toLowerCase()
 
-    return personnelRecords.filter((person) => {
+    return allPersonnelRecords.filter((person) => {
       const matchesQuery =
         query.length === 0 ||
         [person.id, person.name, person.rank, person.position, person.status, person.shift]
@@ -52,7 +72,7 @@ const ResourcePersonnel = () => {
 
       return matchesQuery && matchesStatus && matchesRank
     })
-  }, [personnelRecords, rankFilter, searchTerm, statusFilter])
+  }, [allPersonnelRecords, rankFilter, searchTerm, statusFilter])
 
   const totalPages = Math.max(1, Math.ceil(filteredPersonnel.length / pageSize))
   const page = Math.min(currentPage, totalPages)
@@ -80,6 +100,42 @@ const ResourcePersonnel = () => {
     setCurrentPage(1)
   }
 
+  const closeOnboardModal = () => {
+    setShowOnboardModal(false)
+    setCreateError('')
+    setPersonnel(createInitialPersonnelForm())
+    setFormRenderKey((key) => key + 1)
+  }
+
+  const updatePersonnelField = (field, value) => {
+    setPersonnel((current) => ({ ...current, [field]: value }))
+    if (createError) {
+      setCreateError('')
+    }
+  }
+
+  const onboardPersonnel = () => {
+    const requiredFields = ['name', 'serviceNumber', 'email', 'phone', 'rank', 'position', 'shift', 'status', 'yearsInService']
+    const hasMissingField = requiredFields.some((field) => !`${personnel[field] || ''}`.trim())
+
+    if (hasMissingField) {
+      setCreateError('Complete all required personnel details before onboarding.')
+      return
+    }
+
+    const resourceNumber = Number(`${resourceId || ''}`.replace(/\D/g, '')) || 1
+    setOnboardedPersonnel((current) => [
+      {
+        ...personnel,
+        id: `PER-${resourceNumber.toString().padStart(3, '0')}-${(personnelRecords.length + current.length + 1).toString().padStart(3, '0')}`,
+        yearsInService: Number(personnel.yearsInService),
+      },
+      ...current,
+    ])
+    setCurrentPage(1)
+    closeOnboardModal()
+  }
+
   return (
     <article className="rounded-lg border border-stone-200 bg-white p-4 dark:border-stone-900/50 dark:bg-stone-900/10">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -87,6 +143,13 @@ const ResourcePersonnel = () => {
           <h3 className="text-sm font-semibold text-stone-800 dark:text-stone-100">Resource Personnel</h3>
           <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">Personnel roster with rank, current position, and duty status for this resource location.</p>
         </div>
+        <button
+          type="button"
+          onClick={() => setShowOnboardModal(true)}
+          className="rounded-lg bg-emerald px-4 py-2 text-sm font-semibold text-stone-900 transition hover:bg-emerald/80 dark:bg-light-green dark:hover:bg-light-green/80"
+        >
+          Onboard personnel
+        </button>
       </div>
 
       <div className="mb-6 grid gap-3 md:grid-cols-[1.4fr_1fr_1fr_auto]">
@@ -210,6 +273,25 @@ const ResourcePersonnel = () => {
           </button>
         </div>
       </div>
+      <ModalDialog
+        shown={showOnboardModal}
+        closeFunction={closeOnboardModal}
+        dialogTitle="Onboard personnel"
+        maxWidthClass="max-w-3xl"
+      >
+        <OnboardPersonnel
+          key={formRenderKey}
+          closeFunction={closeOnboardModal}
+          createError={createError}
+          onboardPersonnel={onboardPersonnel}
+          personnel={personnel}
+          updatePersonnelField={updatePersonnelField}
+          rankSelectOptions={rankOptions.filter((rank) => rank !== 'All ranks').map((name) => ({ name }))}
+          positionSelectOptions={['Station Lead', 'Operations Officer', 'Field Responder', 'Logistics Officer', 'Control Room Analyst', 'Patrol Lead'].map((name) => ({ name }))}
+          shiftSelectOptions={['Day Shift', 'Night Shift'].map((name) => ({ name }))}
+          statusSelectOptions={statusOptions.filter((status) => status !== 'All statuses').map((name) => ({ name }))}
+        />
+      </ModalDialog>
     </article>
   )
 }
