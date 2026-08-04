@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import TextareaField from '../../form/TextareaField';
 import FormButton from '../../form/FormButton';
+import FileUpload from '../../form/FileUpload';
 
 const AddIncidentNote = ({doAddNote, close}) => {
-    const [note, setNote] = useState('')
+        const [note, setNote] = useState('')
+        const [attachment, setAttachment] = useState(null)
   return (
     <div>
         <p className="text-sm mb-4">Add a note on this incident below.</p>
@@ -17,6 +19,15 @@ const AddIncidentNote = ({doAddNote, close}) => {
             requiredField
         />
 
+                <div className="mt-4">
+                    <FileUpload
+                        fieldLabel="Attachment"
+                        returnFileDetails={(fileDetails)=>{setAttachment(fileDetails)}}
+                        acceptedFormats={['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'mp3', 'wav', 'mp4', 'mov']}
+                        maxFileSize={15}
+                    />
+                </div>
+
         <div className="w-full mt-8 flex items-center gap-x-4">
             <div className="w-max">
                 <button 
@@ -26,7 +37,10 @@ const AddIncidentNote = ({doAddNote, close}) => {
                 </button>
             </div>
             <FormButton buttonLabel={`Add Incident Note`} buttonAction={()=>{
-                doAddNote(note)
+                                doAddNote({
+                                    text: note,
+                                    attachment,
+                                })
                 close()
             }} />
         </div>

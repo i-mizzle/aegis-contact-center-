@@ -26,6 +26,14 @@ import TextareaField from '../../../components/elements/form/TextareaField';
 import FormButton from '../../../components/elements/form/FormButton';
 import ChevronIcon from '../../../components/elements/icons/ChevronIcon';
 
+const attachmentKindByMime = {
+  image: 'photo',
+  video: 'video',
+  audio: 'audio',
+  application: 'document',
+  text: 'document',
+}
+
 const baseIncidents = [
   {
     id: 'inc-abuja-001',
@@ -116,6 +124,24 @@ const baseIncidents = [
     reportedAt: '2026-07-18T21:16:00Z',
     callPriority: 'P3',
     unitsAssigned: ['Police Unit P-11'],
+  },
+  {
+    id: 'inc-abuja-006',
+    title: 'Reported Kidnapping Case',
+    address: 'Sultan Maccido Crescent, Wuye District, Abuja',
+    coordinates: [9.06284, 7.44815],
+    description: 'Family reports a 17-year-old student was forced into a dark SUV after evening lesson pick-up. Last verified direction of travel was toward the Wuye interchange.',
+    reportedBy: {
+      name: 'Nnenna Eze',
+      phoneNumber: '+234 807 119 4408',
+    },
+    emergencyContact: '+234 807 119 4408',
+    type: 'kidnapping',
+    status: 'active',
+    severity: 'critical',
+    reportedAt: '2026-07-19T10:06:00Z',
+    callPriority: 'P1',
+    unitsAssigned: ['Police Unit P-03', 'DSS'],
   },
 ]
 
@@ -252,6 +278,7 @@ const typeTone = {
   fire: 'bg-orange-500/15 text-orange-600 dark:text-orange-300',
   theft: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
   domestic: 'bg-rose-500/15 text-rose-600 dark:text-rose-300',
+  kidnapping: 'bg-violet-500/15 text-violet-700 dark:text-violet-300',
 }
 
 const statusTone = {
@@ -280,6 +307,7 @@ const incidentFillByType = {
   fire: '#f97316',
   theft: '#f59e0b',
   domestic: '#e11d48',
+  kidnapping: '#7c3aed',
 }
 
 const SIMULATION_TICK_MS = 120
@@ -416,6 +444,29 @@ const buildAssetIcon = (assetStatus) => L.divIcon({
   popupAnchor: [0, -12],
 })
 
+const buildSightingIcon = (confidence = 'medium') => {
+  const fillByConfidence = {
+    high: '#dc2626',
+    medium: '#f59e0b',
+    low: '#facc15',
+  }
+
+  const fill = fillByConfidence[confidence] ?? fillByConfidence.medium
+
+  return L.divIcon({
+    className: 'sighting-marker',
+    html: `
+      <div style="position: relative; width: 20px; height: 20px;">
+        <div style="position:absolute; inset:2px; border-radius:9999px; background:${fill}; border:2px solid #ffffff;"></div>
+        <div style="position:absolute; inset:0; border-radius:9999px; border:2px solid ${fill}; opacity:0.45;"></div>
+      </div>
+    `,
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+    popupAnchor: [0, -12],
+  })
+}
+
 const getRemainingEtaSeconds = (progress, speed) => {
   if (progress >= 1 || speed <= 0) {
     return 0
@@ -434,29 +485,319 @@ const formatEta = (seconds) => {
   return `${mins}:${String(secs).padStart(2, '0')}`
 }
 
-const createIncidentNotes = (incidentId) => ([
+const createIncidentNotes = (incidentId) => {
+  if (incidentId === 'inc-abuja-006') {
+    return [
+      {
+        id: `${incidentId}-note-1`,
+        author: 'Mariam Yusuf',
+        role: 'Family Liaison',
+        text: 'Victim profile submitted by guardian. Student was wearing a navy school hoodie, black skirt, and white sneakers at time of abduction.',
+        time: '2026-07-19T10:09:00Z',
+        attachments: [
+          {
+            id: `${incidentId}-note-1-photo`,
+            name: 'Victim profile photo.jpg',
+            kind: 'photo',
+            url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=900&q=80',
+          },
+        ],
+      },
+      {
+        id: `${incidentId}-note-2`,
+        author: 'Amina Salisu',
+        role: 'Dispatcher',
+        text: 'Reported sighting: dark Toyota Highlander matching caller description seen by two pedestrians approaching Wuye interchange at approximately 10:04 AM.',
+        time: '2026-07-19T10:12:00Z',
+        attachments: [],
+      },
+      {
+        id: `${incidentId}-note-3`,
+        author: 'Ibrahim Nnaji',
+        role: 'Field Response',
+        text: 'Secondary sighting received from fuel station attendant near Berger axis. Vehicle may have changed lanes toward the ring road feeder.',
+        time: '2026-07-19T10:16:00Z',
+        attachments: [
+          {
+            id: `${incidentId}-note-3-audio`,
+            name: 'Attendant voice statement.mp3',
+            kind: 'audio',
+            url: 'https://samplelib.com/lib/preview/mp3/sample-3s.mp3',
+          },
+        ],
+      },
+      {
+        id: `${incidentId}-note-4`,
+        author: 'Ruth Adesina',
+        role: 'Command Officer',
+        text: 'DSS surveillance support requested. Nearby CCTV cluster and school gate footage flagged for urgent collection.',
+        time: '2026-07-19T10:21:00Z',
+        attachments: [
+          {
+            id: `${incidentId}-note-4-doc`,
+            name: 'Sighting grid brief.pdf',
+            kind: 'document',
+            url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+          },
+        ],
+      },
+    ]
+  }
+
+  return [
+    {
+      id: `${incidentId}-note-1`,
+      author: 'Mariam Yusuf',
+      role: 'Dispatcher',
+      text: '911 intake completed. Caller details and event timeline validated.',
+      time: '2026-07-19T09:18:00Z',
+      attachments: [
+        {
+          id: `${incidentId}-note-1-photo`,
+          name: 'Caller storefront photo.jpg',
+          kind: 'photo',
+          url: 'https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=900&q=80',
+        },
+      ],
+    },
+    {
+      id: `${incidentId}-note-2`,
+      author: 'Ibrahim Nnaji',
+      role: 'Responder',
+      text: 'Perimeter established. Awaiting specialized support for scene control.',
+      time: '2026-07-19T09:23:00Z',
+      attachments: [
+        {
+          id: `${incidentId}-note-2-audio`,
+          name: 'Responder voice update.mp3',
+          kind: 'audio',
+          url: 'https://samplelib.com/lib/preview/mp3/sample-3s.mp3',
+        },
+      ],
+    },
+    {
+      id: `${incidentId}-note-3`,
+      author: 'Ruth Adesina',
+      role: 'Command Officer',
+      text: 'Incident remains under active monitoring. Keep updates every 5 minutes.',
+      time: '2026-07-19T09:29:00Z',
+      attachments: [
+        {
+          id: `${incidentId}-note-3-doc`,
+          name: 'Initial incident brief.pdf',
+          kind: 'document',
+          url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+        },
+      ],
+    },
+  ]
+}
+
+const createPublicFeeds = (incidentId, incidentType) => {
+  if (incidentType === 'kidnapping') {
+    return [
+      {
+        id: `${incidentId}-feed-1`,
+        sender: {
+          name: 'Bashir Lawan',
+          email: 'bashir.lawan@example.com',
+          phone: '+234 813 540 1122',
+          avatar: 'BL',
+        },
+        text: 'I saw the same SUV near the Wuye underpass. It paused briefly before turning toward the service lane. Sharing the picture I took from a distance.',
+        time: '2026-07-19T10:14:00Z',
+        attachments: [
+          {
+            id: `${incidentId}-feed-1-photo`,
+            name: 'SUV sighting.jpg',
+            kind: 'photo',
+            url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=900&q=80',
+          },
+        ],
+      },
+      {
+        id: `${incidentId}-feed-2`,
+        sender: {
+          name: 'Halima Suleiman',
+          email: 'halima.suleiman@example.com',
+          phone: '+234 802 445 7708',
+          avatar: 'HS',
+        },
+        text: 'Uploading a voice note from the bus stop. Two men were arguing about changing number plates just after the SUV passed.',
+        time: '2026-07-19T10:18:00Z',
+        attachments: [
+          {
+            id: `${incidentId}-feed-2-audio`,
+            name: 'Bus stop witness note.wav',
+            kind: 'audio',
+            url: 'https://samplelib.com/lib/preview/wav/sample-3s.wav',
+          },
+        ],
+      },
+      {
+        id: `${incidentId}-feed-3`,
+        sender: {
+          name: 'Daniel Obot',
+          email: 'daniel.obot@example.com',
+          phone: '+234 805 210 1142',
+          avatar: 'DO',
+        },
+        text: 'My dash camera captured a partial rear view near the interchange. Sharing the clip in case it helps match the vehicle.',
+        time: '2026-07-19T10:22:00Z',
+        attachments: [
+          {
+            id: `${incidentId}-feed-3-video`,
+            name: 'Dash camera clip.mp4',
+            kind: 'video',
+            url: 'https://samplelib.com/lib/preview/mp4/sample-5s.mp4',
+          },
+        ],
+      },
+    ]
+  }
+
+  return [
   {
-    id: `${incidentId}-note-1`,
-    author: 'Mariam Yusuf',
-    role: 'Dispatcher',
-    text: '911 intake completed. Caller details and event timeline validated.',
-    time: '2026-07-19T09:18:00Z',
+    id: `${incidentId}-feed-1`,
+    sender: {
+      name: 'Aisha Gambo',
+      email: 'aisha.gambo@example.com',
+      phone: '+234 813 640 2201',
+      avatar: 'AG',
+    },
+    text: `I am across the road from the ${incidentType} scene. Security vehicles just blocked the nearest turn-in and pedestrians are gathering by the storefronts.`,
+    time: '2026-07-19T09:20:00Z',
+    attachments: [
+      {
+        id: `${incidentId}-feed-1-photo`,
+        name: 'Street-side witness photo.jpg',
+        kind: 'photo',
+        url: 'https://images.unsplash.com/photo-1515169067868-5387ec356754?auto=format&fit=crop&w=900&q=80',
+      },
+    ],
   },
   {
-    id: `${incidentId}-note-2`,
-    author: 'Ibrahim Nnaji',
-    role: 'Responder',
-    text: 'Perimeter established. Awaiting specialized support for scene control.',
-    time: '2026-07-19T09:23:00Z',
+    id: `${incidentId}-feed-2`,
+    sender: {
+      name: 'Daniel Obot',
+      email: 'daniel.obot@example.com',
+      phone: '+234 805 210 1142',
+      avatar: 'DO',
+    },
+    text: 'Uploading a short clip from the junction camera angle. You can hear bystanders calling out the direction responders moved in.',
+    time: '2026-07-19T09:24:00Z',
+    attachments: [
+      {
+        id: `${incidentId}-feed-2-video`,
+        name: 'Junction clip.mp4',
+        kind: 'video',
+        url: 'https://samplelib.com/lib/preview/mp4/sample-5s.mp4',
+      },
+    ],
   },
   {
-    id: `${incidentId}-note-3`,
-    author: 'Ruth Adesina',
-    role: 'Command Officer',
-    text: 'Incident remains under active monitoring. Keep updates every 5 minutes.',
-    time: '2026-07-19T09:29:00Z',
+    id: `${incidentId}-feed-3`,
+    sender: {
+      name: 'Halima Suleiman',
+      email: 'halima.suleiman@example.com',
+      phone: '+234 802 445 7708',
+      avatar: 'HS',
+    },
+    text: 'Sharing a voice note from inside the block. Smoke is lighter now but there are still people waiting for clearance to return.',
+    time: '2026-07-19T09:28:00Z',
+    attachments: [
+      {
+        id: `${incidentId}-feed-3-audio`,
+        name: 'Resident voice note.wav',
+        kind: 'audio',
+        url: 'https://samplelib.com/lib/preview/wav/sample-3s.wav',
+      },
+      {
+        id: `${incidentId}-feed-3-photo`,
+        name: 'Building frontage.png',
+        kind: 'photo',
+        url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=900&q=80',
+      },
+    ],
   },
-])
+  ]
+}
+
+const incidentSightingsById = {
+  'inc-abuja-006': [
+    {
+      id: 'inc-abuja-006-sighting-1',
+      title: 'Pedestrian sighting',
+      location: 'Approach to Wuye interchange',
+      coordinates: [9.06573, 7.45086],
+      source: 'Dispatcher note',
+      reportedAt: '2026-07-19T10:12:00Z',
+      confidence: 'high',
+      details: 'Two pedestrians reported a dark Toyota Highlander matching the caller description heading toward the interchange.',
+    },
+    {
+      id: 'inc-abuja-006-sighting-2',
+      title: 'Fuel station attendant report',
+      location: 'Berger axis fuel station',
+      coordinates: [9.07144, 7.44138],
+      source: 'Field response note',
+      reportedAt: '2026-07-19T10:16:00Z',
+      confidence: 'medium',
+      details: 'Attendant reported the SUV moved through the feeder lane and may have started a direction change toward the ring road.',
+    },
+    {
+      id: 'inc-abuja-006-sighting-3',
+      title: 'Dashcam visual',
+      location: 'Service lane near Wuye underpass',
+      coordinates: [9.05998, 7.44451],
+      source: 'Public feed upload',
+      reportedAt: '2026-07-19T10:22:00Z',
+      confidence: 'medium',
+      details: 'Dashcam clip captured a partial rear view of the suspect vehicle slowing near the service lane before rejoining traffic.',
+    },
+  ],
+}
+
+const inferAttachmentKind = (file) => {
+  if (!file) {
+    return 'document'
+  }
+
+  const [category] = (file.type ?? '').split('/')
+  return attachmentKindByMime[category] ?? 'document'
+}
+
+const formatActivityTime = (value) => new Date(value).toLocaleString('en-NG', {
+  day: 'numeric',
+  month: 'short',
+  hour: '2-digit',
+  minute: '2-digit',
+})
+
+const renderAttachmentPreview = (attachment) => {
+  if (attachment.kind === 'photo') {
+    return <img alt={attachment.name} className="h-24 w-full rounded-md object-cover" src={attachment.url} />
+  }
+
+  if (attachment.kind === 'video') {
+    return <video className="h-24 w-full rounded-md bg-stone-950 object-cover" src={attachment.url} controls preload="metadata" />
+  }
+
+  if (attachment.kind === 'audio') {
+    return <audio className="w-full" src={attachment.url} controls preload="metadata" />
+  }
+
+  return (
+    <a
+      href={attachment.url}
+      target="_blank"
+      rel="noreferrer"
+      className="flex min-h-24 w-full items-center justify-center rounded-md border border-dashed border-stone-300 bg-stone-100 px-3 text-center text-[11px] font-semibold text-stone-700 dark:border-stone-700 dark:bg-stone-800/40 dark:text-stone-200"
+    >
+      Open document
+    </a>
+  )
+}
 
 const aiAnalysisByIncidentType = {
   robbery: {
@@ -489,6 +830,14 @@ const aiAnalysisByIncidentType = {
       'Separate involved parties on arrival and conduct an immediate welfare check on dependants.',
       'Deploy responders trained in de-escalation before considering scene transfer or arrest action.',
       'Document visible injuries, threats, and prior call history for safeguarding follow-up.',
+    ],
+  },
+  kidnapping: {
+    summary: 'Narrative indicators suggest a high-priority abduction response requiring rapid route denial, surveillance review, and controlled family liaison.',
+    recommendations: [
+      'Immediately expand the search grid around the last verified sighting and lock outbound road chokepoints.',
+      'Activate surveillance recovery for nearby traffic, fuel station, and school perimeter cameras within the reported timeframe.',
+      'Coordinate police and intelligence assets while maintaining a single verified family-contact channel for updates.',
     ],
   },
 }
@@ -524,10 +873,16 @@ const IncidentDetails = () => {
 
   const [incidentStatus, setIncidentStatus] = useState(incident?.status ?? 'active')
   const [notes, setNotes] = useState(() => createIncidentNotes(incidentId ?? 'incident'))
+  const [activeFeedTab, setActiveFeedTab] = useState('notes')
   const [assetProgressById, setAssetProgressById] = useState({})
   const [roadPathByAssetId, setRoadPathByAssetId] = useState({})
   const [isAiAnalysisLoading, setIsAiAnalysisLoading] = useState(true)
   const [aiAnalysis, setAiAnalysis] = useState(() => buildAiAnalysis(incident))
+  const [publicFeeds, setPublicFeeds] = useState(() => createPublicFeeds(incidentId ?? 'incident', incident?.type ?? 'incident'))
+  const incidentSightings = useMemo(
+    () => incidentSightingsById[incidentId] ?? [],
+    [incidentId],
+  )
 
   useEffect(() => {
     setIncidentStatus(incident?.status ?? 'active')
@@ -535,7 +890,9 @@ const IncidentDetails = () => {
 
   useEffect(() => {
     setNotes(createIncidentNotes(incidentId ?? 'incident'))
+    setPublicFeeds(createPublicFeeds(incidentId ?? 'incident', incident?.type ?? 'incident'))
     setAssetProgressById({})
+    setActiveFeedTab('notes')
   }, [incidentId])
 
   useEffect(() => {
@@ -755,6 +1112,16 @@ const IncidentDetails = () => {
     }
   }, [animatedAssets, incident])
 
+  const nearbyDeployableAssets = useMemo(
+    () => animatedAssets.filter((asset) => !asset.requiresApproval),
+    [animatedAssets],
+  )
+
+  const restrictedAssets = useMemo(
+    () => animatedAssets.filter((asset) => asset.requiresApproval),
+    [animatedAssets],
+  )
+
   const [dispatching, setDispatching] = useState(false)
   const [assetToDispatch, setAssetToDispatch] = useState(null)
 
@@ -824,14 +1191,24 @@ const IncidentDetails = () => {
     ]
   }, [incident])
 
-  const addNote = (note) => {
+  const addNote = ({ text, attachment }) => {
+    const normalizedAttachments = attachment?.file
+      ? [{
+        id: `${incident.id}-note-attachment-${Date.now()}`,
+        name: attachment.file.name,
+        kind: inferAttachmentKind(attachment.file),
+        url: URL.createObjectURL(attachment.file),
+      }]
+      : []
+
     setNotes((previous) => ([
       {
         id: `${incident.id}-note-${Date.now()}`,
         author: 'Amina Salisu',
         role: 'Dispatcher',
-        text: note,
+        text,
         time: new Date().toISOString(),
+        attachments: normalizedAttachments,
       },
       ...previous,
     ]))
@@ -962,6 +1339,38 @@ const IncidentDetails = () => {
                   </Popup>
                 </Marker>
 
+                {incidentSightings.map((sighting) => (
+                  <React.Fragment key={sighting.id}>
+                    <Marker position={sighting.coordinates} icon={buildSightingIcon(sighting.confidence)}>
+                      <Popup minWidth={240}>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-semibold text-stone-900">{sighting.title}</p>
+                            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+                              {sighting.confidence} confidence
+                            </span>
+                          </div>
+                          <p className="text-xs text-stone-500">{sighting.location}</p>
+                          <p className="mt-1 text-xs text-stone-700">{sighting.details}</p>
+                          <p className="mt-2 text-[11px] font-medium text-stone-700">Source: {sighting.source}</p>
+                          <p className="text-[11px] text-stone-500">Reported {formatActivityTime(sighting.reportedAt)}</p>
+                        </div>
+                      </Popup>
+                    </Marker>
+
+                    <Circle
+                      center={sighting.coordinates}
+                      radius={140}
+                      pathOptions={{
+                        color: sighting.confidence === 'high' ? '#dc2626' : '#f59e0b',
+                        fillColor: sighting.confidence === 'high' ? '#dc2626' : '#f59e0b',
+                        fillOpacity: 0.08,
+                        weight: 1,
+                      }}
+                    />
+                  </React.Fragment>
+                ))}
+
                 {deployedAssetRoutes.map((route) => {
                   const progress = assetProgressById[route.asset.id] ?? 0
                   const roadPath = roadPathByAssetId[route.asset.id]?.points
@@ -1035,20 +1444,108 @@ const IncidentDetails = () => {
             </div>
 
             <article className="mt-3 rounded-lg border border-stone-200 bg-stone-50 p-3 dark:border-stone-700/50 dark:bg-stone-800/20">
-              <h2 className="text-sm font-semibold text-stone-800 dark:text-stone-100">Incident Notes</h2>
-              <div className="mt-2 space-y-2">
-                {notes.map((note) => (
-                  <div key={note.id} className="rounded-md border border-stone-200 bg-white p-2.5 dark:border-stone-700/40 dark:bg-stone-900/20">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-xs font-semibold text-stone-900 dark:text-stone-100">{note.author}</p>
-                      <span className="rounded bg-stone-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-stone-700 dark:bg-stone-700 dark:text-stone-200">
-                        {note.role}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-[11px] text-stone-600 dark:text-stone-300">{note.text}</p>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between gap-3 border-b border-stone-200 pb-3 dark:border-stone-700/50">
+                <div className="flex items-center gap-2 rounded-lg bg-white p-1 dark:bg-stone-900/30">
+                  <button
+                    type="button"
+                    onClick={() => setActiveFeedTab('notes')}
+                    className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${activeFeedTab === 'notes' ? 'bg-emerald text-stone-950 dark:bg-light-green' : 'text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800'}`}
+                  >
+                    Notes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveFeedTab('publicFeeds')}
+                    className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${activeFeedTab === 'publicFeeds' ? 'bg-emerald text-stone-950 dark:bg-light-green' : 'text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800'}`}
+                  >
+                    Public Feeds
+                  </button>
+                </div>
+
+                {activeFeedTab === 'notes' ? (
+                  <button
+                    type="button"
+                    onClick={() => setAddingNote(true)}
+                    className="rounded-md border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-700 transition hover:bg-stone-100 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                  >
+                    Add Note
+                  </button>
+                ) : null}
               </div>
+
+              {activeFeedTab === 'notes' ? (
+                <div className="mt-3 space-y-2">
+                  {notes.map((note) => (
+                    <div key={note.id} className="rounded-md border border-stone-200 bg-white p-2.5 dark:border-stone-700/40 dark:bg-stone-900/20">
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-xs font-semibold text-stone-900 dark:text-stone-100">{note.author}</p>
+                          <p className="text-[10px] text-stone-500 dark:text-stone-400">{formatActivityTime(note.time)}</p>
+                        </div>
+                        <span className="rounded bg-stone-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-stone-700 dark:bg-stone-700 dark:text-stone-200">
+                          {note.role}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-[11px] text-stone-600 dark:text-stone-300">{note.text}</p>
+
+                      {note.attachments?.length ? (
+                        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                          {note.attachments.map((attachment) => (
+                            <div key={attachment.id} className="rounded-md border border-stone-200 bg-stone-50 p-2 dark:border-stone-700/50 dark:bg-stone-800/20">
+                              {renderAttachmentPreview(attachment)}
+                              <div className="mt-2 flex items-center justify-between gap-2">
+                                <p className="text-[11px] font-medium text-stone-800 dark:text-stone-100">{attachment.name}</p>
+                                <span className="rounded bg-stone-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-stone-700 dark:bg-stone-700 dark:text-stone-200">
+                                  {attachment.kind}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-3 space-y-3">
+                  {publicFeeds.map((feed) => (
+                    <div key={feed.id} className="rounded-md border border-stone-200 bg-white p-3 dark:border-stone-700/40 dark:bg-stone-900/20">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald/15 text-sm font-semibold text-emerald-800 dark:bg-light-green/20 dark:text-light-green">
+                          {feed.sender.avatar}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="rounded-md border border-stone-200 bg-stone-50 px-3 py-2 dark:border-stone-700/40 dark:bg-stone-800/30">
+                            <p className="text-xs font-semibold text-stone-900 dark:text-stone-100">{feed.sender.name}</p>
+                            <p className="text-[11px] text-stone-500 dark:text-stone-400">{feed.sender.email}</p>
+                            <p className="text-[11px] text-stone-500 dark:text-stone-400">{feed.sender.phone}</p>
+                          </div>
+
+                          <p className="mt-3 text-[11px] text-stone-600 dark:text-stone-300">{feed.text}</p>
+                          <p className="mt-2 text-[10px] text-stone-500 dark:text-stone-400">{formatActivityTime(feed.time)}</p>
+
+                          {feed.attachments?.length ? (
+                            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                              {feed.attachments.map((attachment) => (
+                                <div key={attachment.id} className="rounded-md border border-stone-200 bg-stone-50 p-2 dark:border-stone-700/50 dark:bg-stone-800/20">
+                                  {renderAttachmentPreview(attachment)}
+                                  <div className="mt-2 flex items-center justify-between gap-2">
+                                    <p className="text-[11px] font-medium text-stone-800 dark:text-stone-100">{attachment.name}</p>
+                                    <span className="rounded bg-stone-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-stone-700 dark:bg-stone-700 dark:text-stone-200">
+                                      {attachment.kind}
+                                    </span>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </article>
           </div>
 
@@ -1181,7 +1678,7 @@ const IncidentDetails = () => {
               </div>
               {sidebarSectionsOpen.nearbyAssets ? (
                 <div className="mt-2 space-y-2">
-                  {animatedAssets.map((asset) => {
+                  {nearbyDeployableAssets.map((asset) => {
                   const isAssignedHere = asset.deployedIncidentId === incident.id
                   const canDeploy = incidentStatus === 'active' && !isAssignedHere && asset.status !== 'unavailable'
                   const assetCrew = buildAssetPersonnel(asset)
@@ -1278,6 +1775,52 @@ const IncidentDetails = () => {
                     </div>
                   )
                   })}
+
+                  {restrictedAssets.length ? (
+                    <div className="mt-4 space-y-2 rounded-md border border-amber-200 bg-amber-50/70 p-2.5 dark:border-amber-700/30 dark:bg-amber-900/10">
+                      <div>
+                        <p className="text-xs font-semibold text-amber-900 dark:text-amber-100">Restricted Assets</p>
+                        <p className="text-[11px] text-amber-700 dark:text-amber-300">
+                          These assets are available for deployment but require command approval before field activation.
+                        </p>
+                      </div>
+
+                      {restrictedAssets.map((asset) => {
+                        const isAssignedHere = asset.deployedIncidentId === incident.id
+                        const canDeploy = incidentStatus === 'active' && !isAssignedHere && asset.status !== 'unavailable'
+
+                        return (
+                          <div key={asset.id} className="rounded-md border border-amber-200 bg-white px-3 py-2 dark:border-amber-700/30 dark:bg-stone-900/20">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <p className="text-xs font-semibold text-stone-800 dark:text-stone-100">{asset.name}</p>
+                                  <span className="inline-flex rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-800 dark:border-amber-600/70 dark:bg-amber-900/30 dark:text-amber-200">
+                                    Approval Required
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-stone-500 dark:text-stone-400">{asset.type}</p>
+                                <p className={`text-[11px] font-semibold ${assetStatusTone[asset.status] ?? assetStatusTone['ready to deploy']}`}>
+                                  {asset.status}
+                                </p>
+                              </div>
+
+                              <button
+                                type="button"
+                                disabled={!canDeploy}
+                                onClick={() => {
+                                  startAssetDeployment(asset)
+                                }}
+                                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-90 ${asset.status === 'awaiting approval' ? 'bg-amber-200 text-amber-900 dark:bg-amber-500/30 dark:text-amber-200' : 'bg-emerald text-stone-900 hover:brightness-95 dark:bg-light-green'}`}
+                              >
+                                {asset.status === 'awaiting approval' ? 'Awaiting approval' : isAssignedHere ? 'Deployed' : 'Deploy Asset'}
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
             </article>
@@ -1349,7 +1892,7 @@ const IncidentDetails = () => {
         <AddIncidentNote
           doAddNote={(note)=>{addNote(note)}}
           asset={assetToDispatch}
-          close={endAssetDeployment}
+          close={()=>{setAddingNote(false)}}
         />
       </ModalDialog>
 

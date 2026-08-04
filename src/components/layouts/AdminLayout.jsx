@@ -11,6 +11,9 @@ import UsersIcon from '../elements/icons/UsersIcon';
 import ChevronIcon from '../elements/icons/ChevronIcon';
 import HeadphoneIcon from '../elements/icons/HeadphoneIcon';
 import ExclamationTriangleIcon from '../elements/icons/ExclamationTriangleIcon';
+import SpeakerWaveIcon from '../elements/icons/SpeakerWaveIcon';
+import PlugIcon from '../elements/icons/PlugIcon';
+import OpenCubeIcon from '../elements/icons/OpenCubeIcon';
 
 const SIDEBAR_COLLAPSE_BREAKPOINT = 1264;
 
@@ -90,6 +93,11 @@ const AdminLayout = ({ children }) => {
       path: '/admin/resources-assets',
       icon: SquaresIcon
     },
+    {
+      label: 'ISNAS Assets',
+      path: '/admin/isnas-assets',
+      icon: OpenCubeIcon
+    },
     { 
       label: 'Incidents', 
       path: '/admin/incidents',
@@ -98,12 +106,17 @@ const AdminLayout = ({ children }) => {
     {
       label: 'Public Warnings',
       path: '/admin/public-warnings',
-      icon: ExclamationTriangleIcon
+      icon: SpeakerWaveIcon
     },
     { 
       label: 'Payments & Assistance', 
       path: '/admin/payments-assistance',
       icon: TransactionsIcon 
+    },
+    { 
+      label: 'Integrators', 
+      path: '/admin/integrators',
+      icon: PlugIcon 
     },
     // {
     //   label: 'Users',

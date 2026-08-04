@@ -114,7 +114,7 @@ const createSeedResources = () => {
     const status = RESOURCE_STATUSES[index % RESOURCE_STATUSES.length]
     const adminName = `${ADMIN_FIRST_NAMES[index % ADMIN_FIRST_NAMES.length]} ${ADMIN_LAST_NAMES[(index * 3) % ADMIN_LAST_NAMES.length]}`
     const normalizedAdminName = adminName.toLowerCase().replace(/\s+/g, '.')
-    const adminEmail = `${normalizedAdminName}.${index + 1}@asteria-demo.org`
+    const adminEmail = `${normalizedAdminName}.${index + 1}@isnas-demo.org`
     const adminPhone = `080${(31000000 + (index * 197)).toString().slice(0, 8)}`
 
     const personnelCount = 18 + ((index * 7) % 95)

@@ -155,6 +155,7 @@ const BudgetDetails = () => {
 
   const fundingSources = useMemo(() => {
     const sourceTypes = ['Government', 'PPP', 'Individual', 'Corporate']
+    const fundingTypes = ['cash', 'assets', 'mixed']
     const sourceNames = [
       'Federal Intervention Grant',
       'State Co-Funding Allocation',
@@ -176,7 +177,8 @@ const BudgetDetails = () => {
       return {
         name: sourceNames[index],
         type: sourceTypes[index % sourceTypes.length],
-        amountProvided,
+        fundingType: fundingTypes[index % fundingTypes.length],
+        equivalentAmount: amountProvided,
         status: index % 2 === 0 ? 'Paid' : 'Pledged',
       }
     })
@@ -248,6 +250,19 @@ const BudgetDetails = () => {
   const fundingSourceTone = {
     Paid: 'bg-emerald/15 text-emerald',
     Pledged: 'bg-amber-500/15 text-amber-600 dark:text-amber-300',
+  }
+
+  const sourceTypeTone = {
+    Government: 'bg-sky-500/15 text-sky-600 dark:text-sky-300',
+    PPP: 'bg-violet-500/15 text-violet-600 dark:text-violet-300',
+    Individual: 'bg-orange-500/15 text-orange-600 dark:text-orange-300',
+    Corporate: 'bg-stone-300/40 text-stone-700 dark:bg-stone-700/50 dark:text-stone-200',
+  }
+
+  const fundingTypeTone = {
+    cash: 'bg-emerald/15 text-emerald',
+    assets: 'bg-amber-500/15 text-amber-600 dark:text-amber-300',
+    mixed: 'bg-fuchsia-500/15 text-fuchsia-600 dark:text-fuchsia-300',
   }
 
   const budgetStatusTone = {
@@ -413,7 +428,8 @@ const BudgetDetails = () => {
               <tr className="border-b border-stone-200 text-xs uppercase tracking-wide text-stone-500 dark:border-stone-700 dark:text-stone-400">
                 <th className="px-2 py-2">Source Name</th>
                 <th className="px-2 py-2">Type</th>
-                <th className="px-2 py-2">Amount Provided</th>
+                <th className="px-2 py-2">Funding Type</th>
+                <th className="px-2 py-2">Equivalent Amount</th>
                 <th className="px-2 py-2">Status</th>
               </tr>
             </thead>
@@ -421,8 +437,13 @@ const BudgetDetails = () => {
               {fundingSources.map((source) => (
                 <tr key={source.name} className="border-b border-stone-100 dark:border-stone-800">
                   <td className="px-2 py-3 font-medium text-stone-900 dark:text-stone-100">{source.name}</td>
-                  <td className="px-2 py-3 text-stone-600 dark:text-stone-300">{source.type}</td>
-                  <td className="px-2 py-3 font-medium text-stone-800 dark:text-stone-200">{formatCurrency(source.amountProvided)}</td>
+                  <td className="px-2 py-3">
+                    <span className={`rounded-full px-2 py-1 text-xs font-semibold ${sourceTypeTone[source.type]}`}>{source.type}</span>
+                  </td>
+                  <td className="px-2 py-3">
+                    <span className={`rounded-full px-2 py-1 text-xs font-semibold capitalize ${fundingTypeTone[source.fundingType]}`}>{source.fundingType}</span>
+                  </td>
+                  <td className="px-2 py-3 font-medium text-stone-800 dark:text-stone-200">{formatCurrency(source.equivalentAmount)}</td>
                   <td className="px-2 py-3">
                     <span className={`rounded-full px-2 py-1 text-xs font-semibold ${fundingSourceTone[source.status]}`}>{source.status}</span>
                   </td>

@@ -31,6 +31,10 @@ import AdminErrorPage from './pages/admin/AdminErrorPage';
 import IncidentDetails from './pages/admin/incidents/IncidentDetails';
 import PaymentsAssistancePage from './pages/admin/payments-assistance/PaymentsAssistancePage';
 import Payments from './pages/admin/payments-assistance/Payments';
+import Integrators from './pages/admin/integrators/Integrators';
+import IntegratorDetails from './pages/admin/integrators/IntegratorDetails';
+import IsnasAssets from './pages/admin/isnas-assets/IsnasAssets';
+import IsnasAssetDetails from './pages/admin/isnas-assets/IsnasAssetDetails';
 
 function App() {
 
@@ -79,6 +83,12 @@ function App() {
                   <Route path="assets" element={<ResourceAssets />} />
                 </Route>
               </Route>
+
+              <Route path="/admin/isnas-assets" element={<IsnasAssets />} />
+              <Route path="/admin/isnas-assets/:assetId" element={<IsnasAssetDetails />} />
+
+              <Route path="/admin/integrators" element={<Integrators />} />
+              <Route path="/admin/integrators/:integratorId" element={<IntegratorDetails />} />
               
               {/* <Route path="/admin/settings" element={<Settings />}>
                 <Route index element={<Navigate replace to="/admin/settings/profile" />} />

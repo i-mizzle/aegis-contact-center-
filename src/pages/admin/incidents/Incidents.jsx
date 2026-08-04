@@ -113,6 +113,24 @@ const baseIncidents = [
     callPriority: 'P3',
     unitsAssigned: ['Police Unit P-11'],
   },
+  {
+    id: 'inc-abuja-006',
+    title: 'Reported Kidnapping Case',
+    address: 'Sultan Maccido Crescent, Wuye District, Abuja',
+    coordinates: [9.06284, 7.44815],
+    description: 'Family reports a 17-year-old student was forced into a dark SUV after evening lesson pick-up. Last verified direction of travel was toward the Wuye interchange.',
+    reportedBy: {
+      name: 'Nnenna Eze',
+      phoneNumber: '+234 807 119 4408',
+    },
+    emergencyContact: '+234 807 119 4408',
+    type: 'kidnapping',
+    status: 'active',
+    severity: 'critical',
+    reportedAt: '2026-07-19T10:06:00Z',
+    callPriority: 'P1',
+    unitsAssigned: ['Police Unit P-03', 'DSS'],
+  },
 ]
 
 const resolvedIncidentSeed = [
@@ -211,6 +229,7 @@ const typeTone = {
   fire: 'bg-orange-500/15 text-orange-600 dark:text-orange-300',
   theft: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
   domestic: 'bg-rose-500/15 text-rose-600 dark:text-rose-300',
+  kidnapping: 'bg-violet-500/15 text-violet-700 dark:text-violet-300',
 }
 
 const statusTone = {
@@ -242,6 +261,7 @@ const incidentFillByType = {
   fire: '#f97316',
   theft: '#f59e0b',
   domestic: '#e11d48',
+  kidnapping: '#7c3aed',
 }
 
 const SIMULATION_TICK_MS = 120
