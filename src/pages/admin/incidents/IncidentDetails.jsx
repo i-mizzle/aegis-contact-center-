@@ -7,6 +7,7 @@ import {
   Polyline,
   Popup,
   TileLayer,
+  Tooltip,
 } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -25,6 +26,11 @@ import AutocompleteSelect from '../../../components/elements/form/AutocompleteSe
 import TextareaField from '../../../components/elements/form/TextareaField';
 import FormButton from '../../../components/elements/form/FormButton';
 import ChevronIcon from '../../../components/elements/icons/ChevronIcon';
+import PhotoIcon from '../../../components/elements/icons/PhotoIcon';
+import VideoIcon from '../../../components/elements/icons/VideoIcon';
+import AudioIcon from '../../../components/elements/icons/AudioIcon';
+import DocumentIcon from '../../../components/elements/icons/DocumentIcon';
+import ArrowTopRightOnSquareIcon from '../../../components/elements/icons/ArrowTopRightOnSquareIcon';
 
 const attachmentKindByMime = {
   image: 'photo',
@@ -774,29 +780,45 @@ const formatActivityTime = (value) => new Date(value).toLocaleString('en-NG', {
   minute: '2-digit',
 })
 
-const renderAttachmentPreview = (attachment) => {
-  if (attachment.kind === 'photo') {
-    return <img alt={attachment.name} className="h-24 w-full rounded-md object-cover" src={attachment.url} />
+const getAttachmentTypeLabel = (kind) => {
+  if (kind === 'photo') {
+    return 'Image attachment'
   }
 
-  if (attachment.kind === 'video') {
-    return <video className="h-24 w-full rounded-md bg-stone-950 object-cover" src={attachment.url} controls preload="metadata" />
+  if (kind === 'video') {
+    return 'Video attachment'
   }
 
-  if (attachment.kind === 'audio') {
-    return <audio className="w-full" src={attachment.url} controls preload="metadata" />
+  if (kind === 'audio') {
+    return 'Audio attachment'
   }
 
-  return (
-    <a
-      href={attachment.url}
-      target="_blank"
-      rel="noreferrer"
-      className="flex min-h-24 w-full items-center justify-center rounded-md border border-dashed border-stone-300 bg-stone-100 px-3 text-center text-[11px] font-semibold text-stone-700 dark:border-stone-700 dark:bg-stone-800/40 dark:text-stone-200"
-    >
-      Open document
-    </a>
-  )
+  return 'Document attachment'
+}
+
+const attachmentToneByKind = {
+  photo: 'bg-sky-100 text-sky-700 dark:bg-sky-900/20 dark:text-sky-300',
+  video: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-300',
+  audio: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300',
+  document: 'bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300',
+}
+
+const renderAttachmentIcon = (kind) => {
+  const className = 'h-4 w-4'
+
+  if (kind === 'photo') {
+    return <PhotoIcon className={className} />
+  }
+
+  if (kind === 'video') {
+    return <VideoIcon className={className} />
+  }
+
+  if (kind === 'audio') {
+    return <AudioIcon className={className} />
+  }
+
+  return <DocumentIcon className={className} />
 }
 
 const aiAnalysisByIncidentType = {
@@ -1219,6 +1241,7 @@ const IncidentDetails = () => {
   const [escalationAuthority, setEscalationAuthority] = useState('')
   const [escalationNote, setEscalationNote] = useState('')
   const [videoStream, setVideoStream] = useState({ shown: false, title: '', url: '' })
+  const [attachmentViewer, setAttachmentViewer] = useState({ shown: false, attachment: null })
 
   const openVideoStream = (titlePrefix, streamOptions = bodyCamStreamVideoOptions) => {
     const selectedVideo = streamOptions[Math.floor(Math.random() * streamOptions.length)]
@@ -1231,6 +1254,14 @@ const IncidentDetails = () => {
 
   const closeVideoStream = () => {
     setVideoStream({ shown: false, title: '', url: '' })
+  }
+
+  const openAttachmentViewer = (attachment) => {
+    setAttachmentViewer({ shown: true, attachment })
+  }
+
+  const closeAttachmentViewer = () => {
+    setAttachmentViewer({ shown: false, attachment: null })
   }
 
   const resolveIncident = () => {
@@ -1342,6 +1373,13 @@ const IncidentDetails = () => {
                 {incidentSightings.map((sighting) => (
                   <React.Fragment key={sighting.id}>
                     <Marker position={sighting.coordinates} icon={buildSightingIcon(sighting.confidence)}>
+                      <Tooltip direction="top" offset={[0, -12]} opacity={0.95}>
+                        <div className="space-y-1">
+                          <p className="text-xs font-semibold text-stone-900">{sighting.title}</p>
+                          <p className="text-[11px] text-stone-600">{sighting.location}</p>
+                          <p className="text-[11px] text-stone-700">{sighting.details}</p>
+                        </div>
+                      </Tooltip>
                       <Popup minWidth={240}>
                         <div>
                           <div className="flex items-center gap-2">
@@ -1492,12 +1530,25 @@ const IncidentDetails = () => {
                         <div className="mt-3 grid gap-2 sm:grid-cols-2">
                           {note.attachments.map((attachment) => (
                             <div key={attachment.id} className="rounded-md border border-stone-200 bg-stone-50 p-2 dark:border-stone-700/50 dark:bg-stone-800/20">
-                              {renderAttachmentPreview(attachment)}
-                              <div className="mt-2 flex items-center justify-between gap-2">
-                                <p className="text-[11px] font-medium text-stone-800 dark:text-stone-100">{attachment.name}</p>
-                                <span className="rounded bg-stone-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-stone-700 dark:bg-stone-700 dark:text-stone-200">
-                                  {attachment.kind}
-                                </span>
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="flex min-w-0 items-center gap-2">
+                                  <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${attachmentToneByKind[attachment.kind] ?? attachmentToneByKind.document}`}>
+                                    {renderAttachmentIcon(attachment.kind)}
+                                  </span>
+                                  <div className="min-w-0">
+                                    <p className="truncate text-[11px] font-medium text-stone-800 dark:text-stone-100">{attachment.name}</p>
+                                    <p className="text-[10px] text-stone-500 dark:text-stone-400">{getAttachmentTypeLabel(attachment.kind)}</p>
+                                  </div>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => openAttachmentViewer(attachment)}
+                                  className="inline-flex shrink-0 items-center gap-1 rounded-md border border-stone-300 bg-white px-2 py-1 text-[10px] font-semibold text-stone-700 transition hover:bg-stone-100 dark:border-stone-600 dark:bg-stone-900/30 dark:text-stone-200 dark:hover:bg-stone-800"
+                                >
+                                  <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+                                  View
+                                </button>
                               </div>
                             </div>
                           ))}
@@ -1529,12 +1580,25 @@ const IncidentDetails = () => {
                             <div className="mt-3 grid gap-2 sm:grid-cols-2">
                               {feed.attachments.map((attachment) => (
                                 <div key={attachment.id} className="rounded-md border border-stone-200 bg-stone-50 p-2 dark:border-stone-700/50 dark:bg-stone-800/20">
-                                  {renderAttachmentPreview(attachment)}
-                                  <div className="mt-2 flex items-center justify-between gap-2">
-                                    <p className="text-[11px] font-medium text-stone-800 dark:text-stone-100">{attachment.name}</p>
-                                    <span className="rounded bg-stone-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-stone-700 dark:bg-stone-700 dark:text-stone-200">
-                                      {attachment.kind}
-                                    </span>
+                                  <div className="flex items-center justify-between gap-3">
+                                    <div className="flex min-w-0 items-center gap-2">
+                                      <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md ${attachmentToneByKind[attachment.kind] ?? attachmentToneByKind.document}`}>
+                                        {renderAttachmentIcon(attachment.kind)}
+                                      </span>
+                                      <div className="min-w-0">
+                                        <p className="truncate text-[11px] font-medium text-stone-800 dark:text-stone-100">{attachment.name}</p>
+                                        <p className="text-[10px] text-stone-500 dark:text-stone-400">{getAttachmentTypeLabel(attachment.kind)}</p>
+                                      </div>
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => openAttachmentViewer(attachment)}
+                                      className="inline-flex shrink-0 items-center gap-1 rounded-md border border-stone-300 bg-white px-2 py-1 text-[10px] font-semibold text-stone-700 transition hover:bg-stone-100 dark:border-stone-600 dark:bg-stone-900/30 dark:text-stone-200 dark:hover:bg-stone-800"
+                                    >
+                                      <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+                                      View
+                                    </button>
                                   </div>
                                 </div>
                               ))}
@@ -1976,6 +2040,68 @@ const IncidentDetails = () => {
               No video stream source available.
             </div>
           )}
+        </div>
+      </ModalDialog>
+
+      <ModalDialog
+        shown={attachmentViewer.shown}
+        closeFunction={closeAttachmentViewer}
+        dialogTitle={attachmentViewer.attachment?.name || 'Attachment Viewer'}
+        maxWidthClass={`max-w-3xl`}
+      >
+        <div className="space-y-3">
+          <p className="pb-4 text-xs text-stone-600 dark:text-stone-300">
+            {getAttachmentTypeLabel(attachmentViewer.attachment?.kind)}
+          </p>
+
+          {attachmentViewer.attachment?.kind === 'photo' ? (
+            <div className="overflow-hidden rounded-lg border border-stone-200 bg-stone-950 dark:border-stone-700">
+              <img
+                src={attachmentViewer.attachment.url}
+                alt={attachmentViewer.attachment.name}
+                className="h-full max-h-[70vh] w-full object-contain"
+              />
+            </div>
+          ) : null}
+
+          {attachmentViewer.attachment?.kind === 'video' ? (
+            <div className="overflow-hidden rounded-lg border border-stone-200 bg-black dark:border-stone-700">
+              <video
+                key={attachmentViewer.attachment.url}
+                controls
+                autoPlay
+                playsInline
+                className="h-full max-h-[70vh] w-full"
+              >
+                <source src={attachmentViewer.attachment.url} />
+              </video>
+            </div>
+          ) : null}
+
+          {attachmentViewer.attachment?.kind === 'audio' ? (
+            <div className="rounded-lg border border-stone-200 bg-stone-50 px-4 py-5 dark:border-stone-700 dark:bg-stone-900/30">
+              <audio className="w-full" src={attachmentViewer.attachment.url} controls autoPlay preload="metadata" />
+            </div>
+          ) : null}
+
+          {attachmentViewer.attachment?.kind === 'document' ? (
+            <div className="space-y-3 rounded-lg border border-stone-200 bg-stone-50 px-4 py-5 dark:border-stone-700 dark:bg-stone-900/30">
+              <p className="text-sm text-stone-700 dark:text-stone-200">
+                This document will open in a separate tab for full viewing.
+              </p>
+              <div>
+                <a
+                  href={attachmentViewer.attachment.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-md bg-emerald px-3 py-2 text-xs font-semibold text-stone-900 transition hover:brightness-95 dark:bg-light-green"
+                >
+                  <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                  Open document
+                </a>
+              </div>
+            </div>
+          ) : null}
         </div>
       </ModalDialog>
     </>
