@@ -114,7 +114,7 @@ const createSeedResources = () => {
     const status = RESOURCE_STATUSES[index % RESOURCE_STATUSES.length]
     const adminName = `${ADMIN_FIRST_NAMES[index % ADMIN_FIRST_NAMES.length]} ${ADMIN_LAST_NAMES[(index * 3) % ADMIN_LAST_NAMES.length]}`
     const normalizedAdminName = adminName.toLowerCase().replace(/\s+/g, '.')
-    const adminEmail = `${normalizedAdminName}.${index + 1}@isnas-demo.org`
+    const adminEmail = `${normalizedAdminName}.${index + 1}@aegis-demo.org`
     const adminPhone = `080${(31000000 + (index * 197)).toString().slice(0, 8)}`
 
     const personnelCount = 18 + ((index * 7) % 95)
@@ -330,7 +330,7 @@ const Resources = () => {
     <section className="space-y-5">
       <div className="">
         <p className="text-xs font-semibold tracking-wide text-emerald dark:text-light-green">Resources & Assets</p>
-        <h1 className="mt-2 text-2xl font-semibold text-stone-900 dark:text-stone-100">ISNAS Resource Management Suite</h1>
+        <h1 className="mt-2 text-2xl font-semibold text-stone-900 dark:text-stone-100">AEGIS Resource Management Suite</h1>
         <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
             Centralized platform for managing resources and assets.
         </p>

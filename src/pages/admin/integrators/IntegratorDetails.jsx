@@ -427,7 +427,7 @@ const IntegratorDetails = () => {
               <div>
                 <h2 className="text-sm font-semibold text-stone-800 dark:text-stone-100">Outfit assets</h2>
                 <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
-                  Asset registry for the integrator, following the same surveillance and IoT list style used in the ISNAS asset screens.
+                  Asset registry for the integrator, following the same surveillance and IoT list style used in the AEGIS asset screens.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2 text-xs">

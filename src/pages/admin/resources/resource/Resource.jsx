@@ -67,7 +67,7 @@ const Resource = () => {
       establishedAt: new Date(2021 + (index % 4), (index * 2) % 12, ((index * 3) % 27) + 1),
       administrator: {
         name: adminName,
-        email: `${normalizedAdminName}.${numericId}@isnas-demo.org`,
+        email: `${normalizedAdminName}.${numericId}@aegis-demo.org`,
         phone: `080${(31000000 + (index * 197)).toString().slice(0, 8)}`,
       },
     }

@@ -94,8 +94,8 @@ const AdminLayout = ({ children }) => {
       icon: SquaresIcon
     },
     {
-      label: 'ISNAS Assets',
-      path: '/admin/isnas-assets',
+      label: 'AEGIS Assets',
+      path: '/admin/aegis-assets',
       icon: OpenCubeIcon
     },
     { 

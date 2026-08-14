@@ -14,9 +14,9 @@ import {
   createSeedAssets,
   readStoredAssets,
   writeStoredAssets,
-} from './isnasAssetData'
+} from './aegisAssetData'
 
-const IsnasAssets = () => {
+const AegisAssets = () => {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
   const [typeFilter, setTypeFilter] = useState('All types')
@@ -205,7 +205,7 @@ const IsnasAssets = () => {
   return (
     <section className="space-y-5">
       <div>
-        <p className="text-xs font-semibold tracking-wide text-emerald dark:text-light-green">ISNAS Assets</p>
+        <p className="text-xs font-semibold tracking-wide text-emerald dark:text-light-green">AEGIS Assets</p>
         <h1 className="mt-2 text-2xl font-semibold text-stone-900 dark:text-stone-100">Security surveillance and IoT asset registry</h1>
         <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
           Records for cameras, sensors, alarms, gateways, and other security devices with capability flags and service history.
@@ -352,7 +352,7 @@ const IsnasAssets = () => {
                 return (
                   <tr
                     key={asset.id}
-                    onClick={() => navigate(`/admin/isnas-assets/${asset.id}`)}
+                    onClick={() => navigate(`/admin/aegis-assets/${asset.id}`)}
                     className="cursor-pointer border-b border-stone-100 transition hover:bg-stone-50 dark:border-stone-800 dark:hover:bg-stone-800/20"
                   >
                     <td className="px-2 py-3">
@@ -599,4 +599,4 @@ const IsnasAssets = () => {
   )
 }
 
-export default IsnasAssets
+export default AegisAssets

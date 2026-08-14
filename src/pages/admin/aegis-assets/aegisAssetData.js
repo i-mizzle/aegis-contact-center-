@@ -196,7 +196,7 @@ export const TYPE_PROFILES = {
   },
 }
 
-export const ASSET_STORAGE_KEY = 'isnas-assets-created'
+export const ASSET_STORAGE_KEY = 'aegis-assets-created'
 
 export const readStoredAssets = () => {
   if (typeof window === 'undefined') {

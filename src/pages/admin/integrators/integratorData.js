@@ -3,7 +3,7 @@ import {
   LOCATIONS,
   TYPE_PROFILES,
   createSeedAssets,
-} from '../isnas-assets/isnasAssetData'
+} from '../aegis-assets/aegisAssetData'
 
 const INTEGRATOR_PROFILES = [
   {

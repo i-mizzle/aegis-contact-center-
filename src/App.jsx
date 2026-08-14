@@ -33,8 +33,8 @@ import PaymentsAssistancePage from './pages/admin/payments-assistance/PaymentsAs
 import Payments from './pages/admin/payments-assistance/Payments';
 import Integrators from './pages/admin/integrators/Integrators';
 import IntegratorDetails from './pages/admin/integrators/IntegratorDetails';
-import IsnasAssets from './pages/admin/isnas-assets/IsnasAssets';
-import IsnasAssetDetails from './pages/admin/isnas-assets/IsnasAssetDetails';
+import AegisAssets from './pages/admin/aegis-assets/AegisAssets';
+import AegisAssetDetails from './pages/admin/aegis-assets/AegisAssetDetails';
 
 function App() {
 
@@ -84,8 +84,8 @@ function App() {
                 </Route>
               </Route>
 
-              <Route path="/admin/isnas-assets" element={<IsnasAssets />} />
-              <Route path="/admin/isnas-assets/:assetId" element={<IsnasAssetDetails />} />
+              <Route path="/admin/aegis-assets" element={<AegisAssets />} />
+              <Route path="/admin/aegis-assets/:assetId" element={<AegisAssetDetails />} />
 
               <Route path="/admin/integrators" element={<Integrators />} />
               <Route path="/admin/integrators/:integratorId" element={<IntegratorDetails />} />

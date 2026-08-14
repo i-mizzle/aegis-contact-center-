@@ -12,7 +12,7 @@ import {
   createSeedAssets,
   readStoredAssets,
   writeStoredAssets,
-} from './isnasAssetData'
+} from './aegisAssetData'
 import { useTheme } from '../../../context/ThemeContext'
 
 const MAP_ZOOM = 18
@@ -33,7 +33,7 @@ const buildAssetIcon = (status) => {
     iconAnchor: [9, 9],
   })
 }
-
+const AEGIS_ASSETS = 'AEGIS_ASSETS' 
 const createMediaSource = (asset) => {
   const profile = TYPE_PROFILES[asset.type] || {}
   const mediaType = asset.mediaType || profile.mediaType || 'image'
@@ -82,7 +82,7 @@ const formatTimelineDate = (value) => new Intl.DateTimeFormat('en-NG', {
   minute: '2-digit',
 }).format(new Date(value))
 
-const IsnasAssetDetails = () => {
+const AegisAssetDetails = () => {
   const { assetId } = useParams()
   const { isDarkMode } = useTheme()
   const [showStreamModal, setShowStreamModal] = useState(false)
@@ -181,7 +181,7 @@ const IsnasAssetDetails = () => {
       <section className="space-y-4 rounded-lg border border-stone-200 bg-white p-4 dark:border-stone-900/50 dark:bg-stone-900/10">
         <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">Asset not found</p>
         <p className="text-sm text-stone-600 dark:text-stone-300">The selected asset could not be resolved from the registry.</p>
-        <Link to="/admin/isnas-assets" className="inline-flex rounded-lg bg-emerald px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald/90 dark:bg-light-green dark:text-stone-900">
+        <Link to="/admin/aegis-assets" className="inline-flex rounded-lg bg-emerald px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald/90 dark:bg-light-green dark:text-stone-900">
           Back to assets
         </Link>
       </section>
@@ -192,7 +192,7 @@ const IsnasAssetDetails = () => {
     <section className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="text-xs font-semibold tracking-wide text-emerald dark:text-light-green">ISNAS Assets</p>
+          <p className="text-xs font-semibold tracking-wide text-emerald dark:text-light-green">AEGIS Assets</p>
           <h1 className="mt-2 text-2xl font-semibold text-stone-900 dark:text-stone-100">{asset.name}</h1>
           <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
             Detailed record for the security device, including location, capabilities, service data, and live media stream access.
@@ -201,7 +201,7 @@ const IsnasAssetDetails = () => {
 
         <div className="flex flex-wrap gap-2">
           <Link
-            to="/admin/isnas-assets"
+            to="/admin/aegis-assets"
             className="rounded-lg border border-stone-200 px-4 py-2 text-sm font-medium text-stone-600 transition hover:bg-stone-50 dark:border-stone-800 dark:text-stone-300 dark:hover:bg-stone-900/40"
           >
             Back to assets
@@ -421,4 +421,4 @@ const IsnasAssetDetails = () => {
   )
 }
 
-export default IsnasAssetDetails
+export default AegisAssetDetails

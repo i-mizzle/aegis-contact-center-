@@ -89,7 +89,7 @@ const Integrators = () => {
     <section className="space-y-5">
       <div>
         <p className="text-xs font-semibold tracking-wide text-emerald dark:text-light-green">Integrators</p>
-        <h1 className="mt-2 text-2xl font-semibold text-stone-900 dark:text-stone-100">Tenant organisations using ISNAS at smaller scale</h1>
+        <h1 className="mt-2 text-2xl font-semibold text-stone-900 dark:text-stone-100">Tenant organisations using AEGIS at smaller scale</h1>
         <p className="mt-1 text-sm text-stone-600 dark:text-stone-300">
           Dummy records for private security agencies, estates, universities, hospitals, and community operators connected to the platform.
         </p>
